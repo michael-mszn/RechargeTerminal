@@ -1,0 +1,109 @@
+<?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+if(!isset($_POST['password']) || !isset($_POST['username'])) {
+    echo <<<FORM
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LDAP Login</title>
+</head>
+<body>
+    <form method="POST" action="">
+        <label for="password">Passwort:</label>
+        <input type="text" id="username" name="username" required><br>
+        <input type="password" id="password" name="password" required><br>
+        <input type="submit" value="Anmelden">
+    </form>
+</body>
+</html>
+FORM;
+    exit;
+}
+// Access Data
+$ldap_host = 'ldaps://adldap.hs-regensburg.de';
+$ldap_dn   = 'DC=hs-regensburg,DC=de';
+$ldap_user = $_POST['username'];
+$ldap_pass = $_POST['password'];
+$samAccountName = explode('@', $ldap_user)[0];
+
+// Build connection
+$ldap_conn = ldap_connect($ldap_host);
+if (!$ldap_conn) {
+    die("Verbindung zum LDAP-Server fehlgeschlagen.");
+}
+
+// Set LDAP Options
+ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
+ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0); // important for AD
+
+// Bind with User
+if (!@ldap_bind($ldap_conn, $ldap_user, $ldap_pass)) {
+    die("Bind fehlgeschlagen: " . ldap_error($ldap_conn));
+}
+
+// Filter and Attributes
+$filter = "(samAccountName=$samAccountName)";
+$attributes = ['givenName', 'sn'];
+
+// Search
+$search = ldap_search($ldap_conn, $ldap_dn, $filter, $attributes, 0, 0);
+if (!$search) {
+    die("Suche fehlgeschlagen: " . ldap_error($ldap_conn));
+}
+
+// Get Results
+$entries = ldap_get_entries($ldap_conn, $search);
+
+// Show Results
+//echo "<pre>";
+//print_r($entries);
+//echo "</pre>";
+
+// Close Connection
+ldap_unbind($ldap_conn);
+
+
+
+
+
+
+// Extract first entry
+if ($entries['count'] < 1) {
+    die("Kein Benutzer gefunden.");
+}
+
+// Build a displayable full name
+$givenName = $entries[0]['givenname'][0] ?? '';
+$sn        = $entries[0]['sn'][0]        ?? '';
+$fullName  = trim("$givenName $sn");
+if ($fullName === '') {
+    $fullName = $samAccountName;
+}
+
+$db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
+$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+// a) Save username as "current_user" in key_value
+$stmt = $db->prepare("INSERT OR REPLACE INTO key_value (key, value, updated_at) VALUES ('current_user', ?, CURRENT_TIMESTAMP)");
+$stmt->execute([$ldap_user]);
+
+// b) Save login as "last_activity" in key_value
+$stmt = $db->prepare("INSERT OR REPLACE INTO key_value (key, value, updated_at) VALUES ('last_activity', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+$stmt->execute();
+
+// c) Save login time and first name into users table
+$stmt = $db->prepare("INSERT INTO users (username, name, last_login, counter)
+    VALUES (?, ?, CURRENT_TIMESTAMP, 0)
+    ON CONFLICT(username) DO UPDATE SET last_login = CURRENT_TIMESTAMP, name = excluded.name");
+$stmt->execute([$ldap_user, $givenName]);
+
+//Redirect to a “success” page
+header("Location: /terminalserver/success.html");
+exit;
+?>

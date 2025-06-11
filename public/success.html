@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Welcome</title>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          padding: 2rem;
+          text-align: center;
+      }
+      #welcome {
+          font-size: 1.5rem;
+          margin-bottom: 1.5rem;
+      }
+      button {
+          padding: 1rem 2rem;
+          font-size: 1rem;
+          cursor: pointer;
+          margin: 0.5rem;
+      }
+      #result {
+          margin-top: 1rem;
+          font-weight: bold;
+      }
+  </style>
+</head>
+<body>
+<div id="welcome">Welcome, <span id="displayname">...</span>!</div>
+<button onclick="incrementCounter()">Recharge</button>
+<button onclick="handleLogoutClick()">Disconnect</button>
+<textarea id="promptInput" placeholder="Ask ChatGPT..." rows="4" cols="40"></textarea><br />
+<button onclick="sendPrompt()">Send</button>
+<div id="result"></div>
+
+<script>
+  let displayname = "";
+  let logoutTimer;
+
+  function resetLogoutTimer() {
+    clearTimeout(logoutTimer);
+
+    // Notify backend that user is active
+    fetch("https://10.127.0.38/terminalserver/update-logout-timer.php", { method: "POST" })
+      .catch(err => console.error("Activity update failed:", err));
+
+    // Start 5-minute timer
+    logoutTimer = setTimeout(() => {
+      logout();
+    }, 5 * 60 * 1000);
+  }
+
+  // Setup prompt input event listeners for logout timer reset
+  const promptInput = document.getElementById('promptInput');
+  if (promptInput) {
+    promptInput.addEventListener('input', resetLogoutTimer);
+    promptInput.addEventListener('focus', resetLogoutTimer);
+  }
+
+  fetch("https://10.127.0.38/terminalserver/get-name.php")
+    .then(res => {
+      if (!res.ok) {
+        throw new Error("Network response was not ok");
+      }
+      return res.json();
+    })
+    .then(data => {
+      console.log("Fetched JSON:", data);
+      displayname = data.name || "Guest";
+      document.getElementById("displayname").textContent = displayname;
+      resetLogoutTimer(); // Start timer on load
+    })
+    .catch(err => {
+      console.error("Fetch error:", err);
+      document.getElementById("displayname").textContent = "Error fetching user";
+    });
+
+  function incrementCounter() {
+    fetch("https://10.127.0.38/terminalserver/increment-counter.php", {
+      method: "POST"
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success") {
+          document.getElementById("result").textContent = `Counter: ${data.counter}`;
+        } else {
+          document.getElementById("result").textContent = `Error: ${data.message}`;
+        }
+      })
+      .catch(err => {
+        document.getElementById("result").textContent = "Request failed";
+      });
+
+    resetLogoutTimer();
+  }
+
+  function handleLogoutClick() {
+    resetLogoutTimer();
+    logout();
+  }
+
+  function logout() {
+    fetch("https://10.127.0.38/terminalserver/logout.php")
+      .then(res => {
+        if (!res.ok) throw new Error("Logout failed");
+        return res.text();
+      })
+      .then(() => {
+        window.location.href = "https://10.127.0.38/terminalserver/ldap.php";
+      })
+      .catch(err => {
+        console.error("Logout error:", err);
+        document.getElementById("result").textContent = "Logout failed";
+      });
+  }
+
+  function sendPrompt() {
+    const prompt = document.getElementById("promptInput").value.trim();
+    if (!prompt) return;
+
+    fetch("https://10.127.0.38/terminalserver/chatgpt.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    })
+      .then((res) => res.text())
+      .then(text => {
+        try {
+          const data = JSON.parse(text);
+          if (data.error) {
+            document.getElementById("result").textContent = `Error: ${data.error}`;
+          } else {
+            document.getElementById("result").textContent = `Sent successfully`;
+          }
+        } catch (e) {
+          console.error("Response not JSON:", text);
+          document.getElementById("result").textContent = `Invalid JSON: ${text}`;
+        }
+      })
+      .catch(err => {
+        console.error("ChatGPT error:", err);
+        document.getElementById("result").textContent = `Error: ${err.message}`;
+      });
+
+    resetLogoutTimer();
+  }
+</script>
+</body>
+</html>

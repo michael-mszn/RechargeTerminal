@@ -1,0 +1,154 @@
+@font-face {
+    font-family: 'Sansation';
+    src: url('../fonts/Sansation_Regular.ttf') format('ttf');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: Arial, sans-serif;
+}
+
+.fullscreen {
+    background-color: white;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.aspect-box {
+    aspect-ratio: 9 / 16;
+    width: 100%;
+    max-width: 360px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    box-sizing: border-box;
+
+    background-size: cover;
+    background-image: url('../images/strip.png');
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.center-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.headline {
+    margin-top: -10.5%;
+    margin-bottom: -4.5%;
+    font-size: 1.5rem;
+}
+
+.time-element {
+    margin: 0%;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.13);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.fontstyle-time-text {
+    font-size: 3.5rem;
+}
+
+.fontstyle-charge-text {
+    font-size: 1.5rem;
+    color: #A8E792;
+}
+
+.fontstyle-charge-time {
+    margin-top: -2.5%;
+    font-size: 2.7rem;
+    color: #A8E792;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+.ellioth {
+    max-width: 50%;
+    height: auto;
+}
+
+.ellioth-position {
+    display: flex;
+    justify-content: center;
+    margin-top: 40%;
+}
+
+.fontstyle-ellioth-name {
+    font-family: 'Sansation', sans-serif;
+    margin-top: -7%;
+    font-size: 1.7rem;
+    color: #A8E792;
+}
+
+.line {
+    max-width: 100%;
+    height: auto;
+}
+
+.line-position {
+    display: flex;
+    justify-content: center;
+    margin-top: 0.5%;
+}
+
+.grid {
+    max-width: 110%;
+    height: auto;
+    margin-bottom: 0%;
+}
+
+.grid-position {
+    display: flex;
+    justify-content: center;
+}
+
+.cars {
+    max-width: 110%;
+    height: auto;
+    margin-top: -5%;
+}
+
+.cars-position {
+    display: flex;
+    justify-content: center;
+}
+
+.dialogue-box {
+    font-family: 'Sansation', sans-serif;
+    margin-top: 0.5%;
+    margin-left: 18%;
+    margin-right: 18%;
+    word-wrap: break-word;   /* ensures long words wrap */
+    white-space: normal;
+    font-size: 0.8rem;
+    text-align: center;
+    line-height: 1.1rem;
+    color: #848181;
+}
+
+.qrcode,
+.counter {
+    font-size: 2rem;
+    transition: opacity 0.3s ease;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0;
+}
+
+.hidden {
+    display: none;
+}
+
+.auth-state {
+    min-height: 2.5rem; /* prevent layout jump */
+    margin-bottom: 0;
+}
