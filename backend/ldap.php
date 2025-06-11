@@ -89,6 +89,11 @@ if ($fullName === '') {
 $db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+// Get current QR code
+$stmt = $db->prepare("SELECT value FROM key_value WHERE key = 'current_qr_code'");
+$stmt->execute();
+$currentToken = $stmt->fetchColumn();
+
 // a) Save username as "current_user" in key_value
 $stmt = $db->prepare("INSERT OR REPLACE INTO key_value (key, value, updated_at) VALUES ('current_user', ?, CURRENT_TIMESTAMP)");
 $stmt->execute([$ldap_user]);
@@ -97,13 +102,27 @@ $stmt->execute([$ldap_user]);
 $stmt = $db->prepare("INSERT OR REPLACE INTO key_value (key, value, updated_at) VALUES ('last_activity', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
 $stmt->execute();
 
-// c) Save login time and first name into users table
-$stmt = $db->prepare("INSERT INTO users (username, name, last_login, counter)
-    VALUES (?, ?, CURRENT_TIMESTAMP, 0)
-    ON CONFLICT(username) DO UPDATE SET last_login = CURRENT_TIMESTAMP, name = excluded.name");
-$stmt->execute([$ldap_user, $givenName]);
+// c) Update or insert into users table, include remember_token
+$stmt = $db->prepare("
+    INSERT INTO users (username, name, last_login, counter, remember_token)
+    VALUES (?, ?, CURRENT_TIMESTAMP, 0, ?)
+    ON CONFLICT(username) DO UPDATE SET last_login = CURRENT_TIMESTAMP, name = excluded.name, remember_token = excluded.remember_token
+");
+$stmt->execute([$ldap_user, $givenName, $currentToken]);
 
-//Redirect to a “success” page
+// d) Set cookie for 14 days
+setcookie('current_qr_code', $currentToken, [
+    'expires' => time() + (14 * 24 * 60 * 60),
+    'path' => '/',
+    'secure' => true,
+    'httponly' => true, //todo
+    'samesite' => 'Lax'
+]);
+
+// e) Refresh token immediately to prevent reuse
+file_get_contents("https://10.127.0.38/terminalserver/generate-token.php?force=1");
+
+// f) Redirect to success page
 header("Location: /terminalserver/success.html");
 exit;
 ?>

@@ -21,11 +21,28 @@ export default function Home() {
   // Generate QR code when no user
   useEffect(() => {
     if (!username && canvasRef.current) {
-      const url = 'https://10.127.0.38/terminalserver/ldap.php';
+      const url = 'https://10.127.0.38/terminalserver/redirect.php';
       QRCode.toCanvas(canvasRef.current, url, (error) => {
         if (error) console.error('QR error:', error);
       });
     }
+  }, [username]);
+
+  // Poll generate-token.php when user is not signed in (Token refresh is handled server-side)
+  useEffect(() => {
+    if (username) return;
+
+    const pollQRToken = () => {
+      fetch('https://10.127.0.38/terminalserver/generate-token.php')
+        .then(() => {
+        })
+        .catch(err => console.error("Token polling failed", err));
+    };
+
+    pollQRToken(); // Run immediately
+    const interval = setInterval(pollQRToken, 10000);
+
+    return () => clearInterval(interval);
   }, [username]);
 
   // Poll for current user

@@ -16,7 +16,8 @@ $db->exec("CREATE TABLE IF NOT EXISTS users (
     username TEXT PRIMARY KEY,
     last_login TEXT,
     name TEXT,
-    counter INTEGER DEFAULT 0
+    counter INTEGER DEFAULT 0,
+    remember_token TEXT
 )");
 
 echo "Created tables";
