@@ -1,5 +1,5 @@
 <?php
-require_once 'auto-logout.php';
+require_once 'auto-disconnect.php';
 
 $db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);

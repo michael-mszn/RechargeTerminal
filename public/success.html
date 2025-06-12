@@ -23,59 +23,74 @@
           margin-top: 1rem;
           font-weight: bold;
       }
+      #status {
+          margin-top: 2rem;
+          font-size: 1.2rem;
+          color: red;
+      }
   </style>
 </head>
 <body>
 <div id="welcome">Welcome, <span id="displayname">...</span>!</div>
 <button onclick="incrementCounter()">Recharge</button>
-<button onclick="handleLogoutClick()">Disconnect</button>
+<button onclick="handleDisconnectClick()">Disconnect</button>
+<button onclick="handleLogoutClick()">Logout</button>
+<br><br>
 <textarea id="promptInput" placeholder="Ask ChatGPT..." rows="4" cols="40"></textarea><br />
 <button onclick="sendPrompt()">Send</button>
 <div id="result"></div>
+<div id="status"></div>
 
 <script>
   let displayname = "";
-  let logoutTimer;
+  let disconnectTimer;
+  let isDisconnected = false;
 
-  function resetLogoutTimer() {
-    clearTimeout(logoutTimer);
+  function resetDisconnectTimer() {
+    if (isDisconnected) return;
+    clearTimeout(disconnectTimer);
 
-    // Notify backend that user is active
-    fetch("https://10.127.0.38/terminalserver/update-logout-timer.php", { method: "POST" })
-      .catch(err => console.error("Activity update failed:", err));
+    fetch("https://10.127.0.38/terminalserver/update-disconnect-timer.php", {
+      method: "POST"
+    }).catch(err => console.error("Activity update failed:", err));
 
-    // Start 5-minute timer
-    logoutTimer = setTimeout(() => {
-      logout();
+    disconnectTimer = setTimeout(() => {
+      Disconnect();
     }, 5 * 60 * 1000);
   }
 
-  // Setup prompt input event listeners for logout timer reset
   const promptInput = document.getElementById('promptInput');
   if (promptInput) {
-    promptInput.addEventListener('input', resetLogoutTimer);
-    promptInput.addEventListener('focus', resetLogoutTimer);
+    promptInput.addEventListener('input', resetDisconnectTimer);
+    promptInput.addEventListener('focus', resetDisconnectTimer);
   }
 
   fetch("https://10.127.0.38/terminalserver/get-name.php")
     .then(res => {
-      if (!res.ok) {
-        throw new Error("Network response was not ok");
-      }
+      if (!res.ok) throw new Error("Network response was not ok");
       return res.json();
     })
     .then(data => {
-      console.log("Fetched JSON:", data);
       displayname = data.name || "Guest";
       document.getElementById("displayname").textContent = displayname;
-      resetLogoutTimer(); // Start timer on load
+      resetDisconnectTimer();
     })
     .catch(err => {
       console.error("Fetch error:", err);
       document.getElementById("displayname").textContent = "Error fetching user";
     });
 
+  function notifyIfDisconnected() {
+    if (isDisconnected) {
+      document.getElementById("result").textContent = "You must scan the QR code again to use this feature.";
+      return true;
+    }
+    return false;
+  }
+
   function incrementCounter() {
+    if (notifyIfDisconnected()) return;
+
     fetch("https://10.127.0.38/terminalserver/increment-counter.php", {
       method: "POST"
     })
@@ -91,20 +106,30 @@
         document.getElementById("result").textContent = "Request failed";
       });
 
-    resetLogoutTimer();
+    resetDisconnectTimer();
+  }
+
+  function handleDisconnectClick() {
+    fetch("https://10.127.0.38/terminalserver/disconnect.php")
+      .then(res => {
+        if (!res.ok) throw new Error("Disconnect failed");
+        return res.text();
+      })
+      .then(() => {
+        isDisconnected = true;
+        document.getElementById("status").textContent = "You are disconnected. Scan the QR code again to use the terminal.";
+        document.getElementById("result").textContent = "";
+      })
+      .catch(err => {
+        console.error("Disconnect error:", err);
+        document.getElementById("result").textContent = "Disconnect failed";
+      });
   }
 
   function handleLogoutClick() {
-    resetLogoutTimer();
-    logout();
-  }
-
-  function logout() {
-    fetch("https://10.127.0.38/terminalserver/logout.php")
-      .then(res => {
-        if (!res.ok) throw new Error("Logout failed");
-        return res.text();
-      })
+    fetch("https://10.127.0.38/terminalserver/logout.php", {
+      method: "POST"
+    })
       .then(() => {
         window.location.href = "https://10.127.0.38/terminalserver/ldap.php";
       })
@@ -114,7 +139,13 @@
       });
   }
 
+  function Disconnect() {
+    handleDisconnectClick();
+  }
+
   function sendPrompt() {
+    if (notifyIfDisconnected()) return;
+
     const prompt = document.getElementById("promptInput").value.trim();
     if (!prompt) return;
 
@@ -142,7 +173,7 @@
         document.getElementById("result").textContent = `Error: ${err.message}`;
       });
 
-    resetLogoutTimer();
+    resetDisconnectTimer();
   }
 </script>
 </body>

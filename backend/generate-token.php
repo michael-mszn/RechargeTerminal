@@ -1,4 +1,5 @@
 <?php
+header("Access-Control-Allow-Origin: *");
 
 function generateNewToken($forceRotate = false) {
     $db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
