@@ -102,7 +102,11 @@ $stmt->execute([$ldap_user]);
 $stmt = $db->prepare("INSERT OR REPLACE INTO key_value (key, value, updated_at) VALUES ('last_activity', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
 $stmt->execute();
 
-// c) Update or insert into users table, include remember_token
+// c) Force refresh the token so two users don't accidentally get the same token
+require_once __DIR__ . '/generate-token.php';
+$newToken = generateNewToken(true);
+
+// d) Update or insert into users table, include remember_token
 $stmt = $db->prepare("
     INSERT INTO users (username, name, last_login, counter, remember_token)
     VALUES (?, ?, CURRENT_TIMESTAMP, 0, ?)
@@ -110,17 +114,14 @@ $stmt = $db->prepare("
 ");
 $stmt->execute([$ldap_user, $givenName, $currentToken]);
 
-// d) Set cookie for 14 days
+// e) Set cookie for 14 days
 setcookie('current_qr_code', $currentToken, [
     'expires' => time() + (14 * 24 * 60 * 60),
     'path' => '/',
     'secure' => true,
-    'httponly' => true, //todo
+    'httponly' => true,
     'samesite' => 'Lax'
 ]);
-
-// e) Refresh token immediately to prevent reuse
-file_get_contents("https://10.127.0.38/terminalserver/generate-token.php?force=1");
 
 // f) Redirect to success page
 header("Location: /terminalserver/success.html");
