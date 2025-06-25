@@ -17,7 +17,9 @@ $db->exec("CREATE TABLE IF NOT EXISTS users (
     last_login TEXT,
     name TEXT,
     counter INTEGER DEFAULT 0,
-    remember_token TEXT
+    remember_token TEXT,
+    surname TEXT,
+    email TEXT
 )");
 
 $db->exec("CREATE TABLE IF NOT EXISTS parking_slots (
