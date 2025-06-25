@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8" />
   <title>Welcome</title>
@@ -9,121 +9,179 @@
           padding: 2rem;
           text-align: center;
       }
+
       #welcome {
           font-size: 1.5rem;
           margin-bottom: 1.5rem;
       }
+
       button {
           padding: 1rem 2rem;
           font-size: 1rem;
           cursor: pointer;
           margin: 0.5rem;
       }
+
       #result {
           margin-top: 1rem;
           font-weight: bold;
       }
+
       #status {
           margin-top: 2rem;
           font-size: 1.2rem;
           color: red;
       }
+
+      #positionOverlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(255, 255, 255, 0.9);
+          z-index: 5;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+      }
+
+      #mainUI {
+          z-index: 1;
+      }
+
+      #disconnectLogout {
+          position: fixed;
+          top: 1rem;
+          right: 1rem;
+          display: flex;
+          gap: 0.5rem;
+          z-index: 1000;
+      }
+
+      select {
+          font-size: 1rem;
+          padding: 0.5rem;
+      }
+
+      #positionError {
+          color: red;
+          margin-top: 1rem;
+      }
   </style>
 </head>
 <body>
-<div id="welcome">Welcome, <span id="displayname">...</span>!</div>
-<button onclick="incrementCounter()">Recharge</button>
-<button onclick="handleDisconnectClick()">Disconnect</button>
-<button onclick="handleLogoutClick()">Logout</button>
-<br><br>
-<textarea id="promptInput" placeholder="Ask Ellioth something ..." rows="4" cols="40"></textarea><br />
-<button onclick="startSpeechRecognition()">🎤 Ask Ellioth something ...</button>
-<button onclick="sendPrompt()">Send</button>
-<div id="result"></div>
-<div id="status"></div>
+
+<div id="disconnectLogout">
+  <button onclick="handleDisconnectClick()">Disconnect</button>
+  <button onclick="handleLogoutClick()">Logout</button>
+</div>
+
+<!-- Overlay for slot selection -->
+<div id="positionOverlay">
+  <h2>Bitte wählen Sie Ihre Position</h2>
+  <select id="positionSelect">
+    <option disabled selected>Wähle einen freien Slot</option>
+  </select>
+  <button onclick="submitPosition()">Bestätigen</button>
+  <div id="positionError"></div>
+</div>
+
+<div id="welcome">Willkommen, <span id="displayname">...</span>!</div>
+
+<div id="mainUI" style="display: block;">
+  <button onclick="incrementCounter()">Recharge</button>
+  <textarea id="promptInput" placeholder="Ask Ellioth something ..." rows="4" cols="40"></textarea><br />
+  <button onclick="startSpeechRecognition()">🎤 Ask Ellioth something ...</button>
+  <button onclick="sendPrompt()">Send</button>
+  <div id="result"></div>
+  <div id="status"></div>
+</div>
 
 <script>
-  let displayname = "";
-  let disconnectTimer;
+  let isValidated = false;
   let isDisconnected = false;
 
-  function resetDisconnectTimer() {
-    if (isDisconnected) return;
-    clearTimeout(disconnectTimer);
-
-    fetch("https://10.127.0.38/terminalserver/update-disconnect-timer.php", {
-      method: "POST"
-    }).catch(err => console.error("Activity update failed:", err));
-
-    disconnectTimer = setTimeout(() => {
-      Disconnect();
-    }, 5 * 60 * 1000);
-  }
-
-  const promptInput = document.getElementById('promptInput');
-  if (promptInput) {
-    promptInput.addEventListener('input', resetDisconnectTimer);
-    promptInput.addEventListener('focus', resetDisconnectTimer);
-  }
-
-  fetch("https://10.127.0.38/terminalserver/get-name.php")
-    .then(res => {
-      if (!res.ok) throw new Error("Network response was not ok");
-      return res.json();
-    })
-    .then(data => {
-      displayname = data.name || "Guest";
-      document.getElementById("displayname").textContent = displayname;
-      resetDisconnectTimer();
-    })
-    .catch(err => {
-      console.error("Fetch error:", err);
-      document.getElementById("displayname").textContent = "Error fetching user";
-    });
-
-  function notifyIfDisconnected() {
-    if (isDisconnected) {
-      document.getElementById("result").textContent = "You must scan the QR code again to use this feature.";
-      return true;
-    }
-    return false;
-  }
-
-  function incrementCounter() {
-    if (notifyIfDisconnected()) return;
-
-    fetch("https://10.127.0.38/terminalserver/increment-counter.php", {
-      method: "POST"
-    })
+  function fetchCurrentPosition() {
+    fetch('https://10.127.0.38/terminalserver/get-current-position.php')
       .then(res => res.json())
       .then(data => {
-        if (data.status === "success") {
-          document.getElementById("result").textContent = `Counter: ${data.counter}`;
+        if (data.position) {
+
+          isValidated = true;
+          document.getElementById('positionOverlay').style.display = 'none';
         } else {
-          document.getElementById("result").textContent = `Error: ${data.message}`;
+          // No assigned position: show overlay and fetch free slots
+          document.getElementById('positionOverlay').style.display = 'flex';
+          fetchFreePositions();
         }
       })
       .catch(err => {
-        document.getElementById("result").textContent = "Request failed";
+        console.error('Fehler beim Abrufen der zugewiesenen Position', err);
+        // fallback: show overlay to be safe
+        document.getElementById('positionOverlay').style.display = 'flex';
+        fetchFreePositions();
       });
+  }
 
-    resetDisconnectTimer();
+  window.onload = () => {
+    fetchCurrentPosition();
+  }
+
+  function fetchFreePositions() {
+    fetch('https://10.127.0.38/terminalserver/get-free-positions.php')
+      .then(res => res.json())
+      .then(data => {
+        const select = document.getElementById('positionSelect');
+        data.free_positions.forEach(pos => {
+          const option = document.createElement('option');
+          option.value = pos;
+          option.textContent = `Position ${pos}`;
+          select.appendChild(option);
+        });
+      })
+      .catch(err => {
+        document.getElementById('positionError').textContent = 'Fehler beim Laden der Positionen.';
+        console.error(err);
+      });
+  }
+
+  function submitPosition() {
+    const position = document.getElementById('positionSelect').value;
+    if (!position || isNaN(position)) {
+      document.getElementById('positionError').textContent = 'Bitte wählen Sie eine gültige Position.';
+      return;
+    }
+
+    fetch('https://10.127.0.38/terminalserver/claim-position.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ position })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          document.getElementById('positionOverlay').style.display = 'none';
+          isValidated = true;
+        } else {
+          document.getElementById('positionError').textContent = data.message || 'Position konnte nicht reserviert werden.';
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        document.getElementById('positionError').textContent = 'Fehler bei der Anfrage.';
+      });
   }
 
   function handleDisconnectClick() {
     fetch("https://10.127.0.38/terminalserver/disconnect.php")
-      .then(res => {
-        if (!res.ok) throw new Error("Disconnect failed");
-        return res.text();
-      })
+      .then(res => res.text())
       .then(() => {
         isDisconnected = true;
-        document.getElementById("status").textContent = "You are disconnected. Scan the QR code again to use the terminal.";
+        document.getElementById("status").textContent = "Sie sind getrennt. Bitte erneut verbinden.";
         document.getElementById("result").textContent = "";
       })
       .catch(err => {
         console.error("Disconnect error:", err);
-        document.getElementById("result").textContent = "Disconnect failed";
+        document.getElementById("result").textContent = "Fehler beim Trennen.";
       });
   }
 
@@ -134,18 +192,41 @@
       .then(() => {
         window.location.href = "https://10.127.0.38/terminalserver/ldap.php";
       })
-      .catch(err => {
-        console.error("Logout error:", err);
-        document.getElementById("result").textContent = "Logout failed";
+      .catch(() => {
+        document.getElementById("result").textContent = "Logout fehlgeschlagen.";
       });
   }
 
-  function Disconnect() {
-    handleDisconnectClick();
+  function notifyIfNotReady() {
+    const resultDiv = document.getElementById("result");
+    if (isDisconnected) {
+      resultDiv.textContent = "Sie sind getrennt. Bitte verbinden Sie sich erneut.";
+      return true;
+    }
+    if (!isValidated) {
+      resultDiv.textContent = "Bitte wählen Sie zuerst Ihre Position, um fortzufahren.";
+      return true;
+    }
+    return false;
+  }
+
+  function incrementCounter() {
+    if (notifyIfNotReady()) return;
+    fetch("https://10.127.0.38/terminalserver/increment-counter.php", {
+      method: "POST"
+    })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("result").textContent =
+          data.status === "success" ? `Zähler: ${data.counter}` : `Fehler: ${data.message}`;
+      })
+      .catch(() => {
+        document.getElementById("result").textContent = "Fehler beim Anfrage senden.";
+      });
   }
 
   function sendPrompt() {
-    if (notifyIfDisconnected()) return;
+    if (notifyIfNotReady()) return;
 
     const prompt = document.getElementById("promptInput").value.trim();
     if (!prompt) return;
@@ -155,33 +236,24 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
     })
-      .then((res) => res.text())
+      .then(res => res.text())
       .then(text => {
         try {
           const data = JSON.parse(text);
-          if (data.error) {
-            document.getElementById("result").textContent = `Error: ${data.error}`;
-          } else {
-            document.getElementById("result").textContent = `Sent successfully`;
-          }
+          document.getElementById("result").textContent =
+            data.error ? `Fehler: ${data.error}` : "Erfolgreich gesendet.";
         } catch (e) {
-          console.error("Response not JSON:", text);
-          document.getElementById("result").textContent = `Invalid JSON: ${text}`;
+          document.getElementById("result").textContent = `Ungültige Antwort: ${text}`;
         }
       })
       .catch(err => {
-        console.error("ChatGPT error:", err);
-        document.getElementById("result").textContent = `Error: ${err.message}`;
+        document.getElementById("result").textContent = `Fehler: ${err.message}`;
       });
-
-    resetDisconnectTimer();
   }
-</script>
 
-<script>
   function startSpeechRecognition() {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Speech Recognition not supported in this browser.');
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      alert('Spracherkennung wird nicht unterstützt.');
       return;
     }
 
@@ -192,29 +264,38 @@
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    document.getElementById("result").textContent = "Listening... 🎤";
+    document.getElementById("result").textContent = "Höre zu... 🎤";
 
     recognition.onresult = function (event) {
       const transcript = event.results[0][0].transcript;
       document.getElementById("promptInput").value = transcript;
-      document.getElementById("result").textContent = "Speech recognized!";
-      resetDisconnectTimer();
+      document.getElementById("result").textContent = "Sprache erkannt!";
     };
 
     recognition.onerror = function (event) {
-      document.getElementById("result").textContent = `Error: ${event.error}`;
+      document.getElementById("result").textContent = `Fehler: ${event.error}`;
     };
 
     recognition.onend = function () {
       if (!document.getElementById("promptInput").value) {
-        document.getElementById("result").textContent = "No speech detected.";
+        document.getElementById("result").textContent = "Keine Sprache erkannt.";
       }
     };
 
     recognition.start();
   }
-</script>
 
+  fetch("https://10.127.0.38/terminalserver/get-name.php")
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("displayname").textContent = data.name || "Gast";
+    })
+    .catch(() => {
+      document.getElementById("displayname").textContent = "Unbekannt";
+    });
+
+  fetchFreePositions();
+</script>
 
 </body>
 </html>

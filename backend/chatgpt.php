@@ -7,6 +7,7 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
 require_once 'config.php'; // Must define API_KEY constant
+require_once 'require-valid-position.php';
 
 try {
     $input = json_decode(file_get_contents('php://input'), true);

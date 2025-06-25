@@ -68,6 +68,13 @@ ldap_unbind($ldap_conn);
 
 
 
+session_start();
+
+// Store user info in session
+$_SESSION['username'] = $ldap_user;
+
+// Force user to re-select parking position
+unset($_SESSION['parking_position']);
 
 // Extract first entry
 if ($entries['count'] < 1) {
