@@ -50,6 +50,7 @@ if (!@ldap_bind($ldap_conn, $ldap_user, $ldap_pass)) {
 // Filter and Attributes
 $filter = "(samAccountName=$samAccountName)";
 $attributes = ['givenName', 'sn'];
+//$attributes = []; Alle attribute
 
 // Search
 $search = ldap_search($ldap_conn, $ldap_dn, $filter, $attributes, 0, 0);

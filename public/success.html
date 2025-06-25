@@ -36,7 +36,8 @@
 <button onclick="handleDisconnectClick()">Disconnect</button>
 <button onclick="handleLogoutClick()">Logout</button>
 <br><br>
-<textarea id="promptInput" placeholder="Ask ChatGPT..." rows="4" cols="40"></textarea><br />
+<textarea id="promptInput" placeholder="Ask Ellioth something ..." rows="4" cols="40"></textarea><br />
+<button onclick="startSpeechRecognition()">🎤 Ask Ellioth something ...</button>
 <button onclick="sendPrompt()">Send</button>
 <div id="result"></div>
 <div id="status"></div>
@@ -176,5 +177,44 @@
     resetDisconnectTimer();
   }
 </script>
+
+<script>
+  function startSpeechRecognition() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Speech Recognition not supported in this browser.');
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = 'de-DE';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    document.getElementById("result").textContent = "Listening... 🎤";
+
+    recognition.onresult = function (event) {
+      const transcript = event.results[0][0].transcript;
+      document.getElementById("promptInput").value = transcript;
+      document.getElementById("result").textContent = "Speech recognized!";
+      resetDisconnectTimer();
+    };
+
+    recognition.onerror = function (event) {
+      document.getElementById("result").textContent = `Error: ${event.error}`;
+    };
+
+    recognition.onend = function () {
+      if (!document.getElementById("promptInput").value) {
+        document.getElementById("result").textContent = "No speech detected.";
+      }
+    };
+
+    recognition.start();
+  }
+</script>
+
+
 </body>
 </html>

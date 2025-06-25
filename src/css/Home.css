@@ -107,6 +107,7 @@ body {
 }
 
 .grid-position {
+    position: relative;
     display: flex;
     justify-content: center;
 }
@@ -118,8 +119,13 @@ body {
 }
 
 .cars-position {
+    position: relative;
     display: flex;
     justify-content: center;
+    width: 100%;
+    height: 75px;
+    margin-left: -2.5%;
+    margin-top: -1%;
 }
 
 .dialogue-box {
@@ -134,6 +140,7 @@ body {
     line-height: 1.1rem;
     color: #848181;
 }
+
 
 .qrcode,
 .counter {
@@ -151,4 +158,19 @@ body {
 .auth-state {
     min-height: 2.5rem; /* prevent layout jump */
     margin-bottom: 0;
+}
+
+.parking-grid {
+    position: relative;
+    width: 100%;
+    height: 40px; /* or match your car icon height */
+    margin-top: -5%;
+}
+
+.car-icon {
+    position: absolute;
+    width: 18px;        /* fix width */
+    height: auto;       /* auto height to keep aspect ratio */
+    transform: translateY(-50%);
+    object-fit: contain; /* preserve image ratio */
 }

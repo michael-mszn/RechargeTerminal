@@ -10,6 +10,20 @@ import linePng from '../images/dialogue-line.png';
 import gridPng from '../images/grid.png';
 // @ts-ignore
 import carsTestPng from '../images/cars-test.png';
+// @ts-ignore
+import carAuthRequired from '../images/car-auth-required.png';
+// @ts-ignore
+import carCharging from '../images/car-charging.png';
+// @ts-ignore
+import carError from '../images/car-error.png';
+// @ts-ignore
+import carFullyCharged from '../images/car-fully-charged.png';
+
+
+
+type SlotStatus = 'empty' | 'charging' | 'auth_required' | 'error' | 'fully_charged';
+
+
 
 export default function Home() {
   const [username, setUsername] = useState<string | null>(null);
@@ -17,6 +31,7 @@ export default function Home() {
   const [counter, setCounter] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [chatReply, setChatReply] = useState<string>("");
+  const [slots, setSlots] = useState<{ slot: number; status: SlotStatus }[]>([]);
 
   // Generate QR code when no user
   useEffect(() => {
@@ -117,6 +132,34 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [username]);
 
+  // Poll parking slot status
+  useEffect(() => {
+    const fetchSlotStatus = async () => {
+      try {
+        const res = await fetch('https://10.127.0.38/terminalserver/get-parking-status.php');
+        const data = await res.json();
+        setSlots(data);
+      } catch (err) {
+        console.error("Failed to fetch slot status", err);
+      }
+    };
+
+    fetchSlotStatus();
+    const interval = setInterval(fetchSlotStatus, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Map statuses to icons
+  const getCarIcon = (status: SlotStatus): string | null => {
+    switch (status) {
+      case 'charging': return carCharging;
+      case 'auth_required': return carAuthRequired;
+      case 'error': return carError;
+      case 'fully_charged': return carFullyCharged;
+      default: return null;
+    }
+  };
+
   return (
     <div class="fullscreen">
       <div className="aspect-box">
@@ -130,9 +173,34 @@ export default function Home() {
             <div className="grid-position">
               <img src={gridPng} className="grid" />
             </div>
+
             <div className="cars-position">
-              <img src={carsTestPng} className="cars" />
+              {/*After every 4th car position, add an extra margin for better visual processing.*/}
+              {slots.map(({ slot, status }) => {
+                const icon = getCarIcon(status);
+                if (!icon) return null;
+
+                // Base spacing per slot
+                const baseSpacing = 6.25;
+
+                // Number of separators to the *left* of this slot
+                const separatorsBefore = Math.floor((slot - 1) / 4);
+
+                // Final computed offset from left, based on slot index and extra gaps
+                const leftPercent = (slot - 1) * baseSpacing + separatorsBefore * 1.75;
+
+                return (
+                  <img
+                    key={slot}
+                    src={icon}
+                    className="car-icon"
+                    style={{ left: `${leftPercent}%` }}
+                    alt={`Car in slot ${slot}`}
+                  />
+                );
+              })}
             </div>
+
             <p className="time-element">Samstag, 1. Februar 2025</p>
             <p className="time-element fontstyle-time-text">10:00</p>
             <p className="time-element fontstyle-charge-text">Auto lädt seit</p>
