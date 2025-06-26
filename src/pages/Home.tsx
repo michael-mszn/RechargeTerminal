@@ -65,19 +65,8 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Generate QR code when no user
+  // Poll generate-token.php to refresh the token
   useEffect(() => {
-    if (!username && canvasRef.current) {
-      const url = 'https://10.127.0.38/terminalserver/redirect.php';
-      QRCode.toCanvas(canvasRef.current, url, (error) => {
-        if (error) console.error('QR error:', error);
-      });
-    }
-  }, [username]);
-
-  // Poll generate-token.php when user is not signed in (Token refresh is handled server-side)
-  useEffect(() => {
-    if (username) return;
 
     const pollQRToken = () => {
       fetch('https://10.127.0.38/terminalserver/generate-token.php')
@@ -86,7 +75,7 @@ export default function Home() {
     };
 
     pollQRToken(); // Run immediately
-    const interval = setInterval(pollQRToken, 10000);
+    const interval = setInterval(pollQRToken, 1000);
 
     return () => clearInterval(interval);
   }, [username]);
@@ -177,6 +166,28 @@ export default function Home() {
 
     fetchSlotStatus();
     const interval = setInterval(fetchSlotStatus, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Poll current QR code every 10s and render it
+  useEffect(() => {
+    const updateQRCode = async () => {
+      try {
+        const res = await fetch('https://10.127.0.38/terminalserver/get-current-qr-code.php');
+        const data = await res.json();
+        const qrUrl = data.current_qr_code;
+        if (canvasRef.current) {
+          QRCode.toCanvas(canvasRef.current, qrUrl, (error) => {
+            if (error) console.error('QR error:', error);
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch QR code:', err);
+      }
+    };
+
+    updateQRCode();
+    const interval = setInterval(updateQRCode, 1000);
     return () => clearInterval(interval);
   }, []);
 
