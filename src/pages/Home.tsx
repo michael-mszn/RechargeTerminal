@@ -236,9 +236,6 @@ export default function Home() {
             <p className="time-element">{currentDate}</p>
             <p className="time-element fontstyle-time-text">{currentTime}</p>
 
-            <p className="time-element fontstyle-charge-text">Auto lädt seit</p>
-            <p className="time-element fontstyle-charge-time">2h 34m</p>
-
             {/* Counter only shown when user is logged in */}
             <div className={`counter time-element ${username ? '' : 'hidden'}`} id="counter">
               Welcome, {displayName} — Counter: {counter}

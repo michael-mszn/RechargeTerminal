@@ -33,6 +33,12 @@
           color: red;
       }
 
+      #charging-time {
+          margin-top: 2rem;
+          font-size: 1.2rem;
+          color: greenyellow;
+      }
+
       #positionOverlay {
           position: fixed;
           inset: 0;
@@ -93,6 +99,7 @@
   <button onclick="startSpeechRecognition()">🎤 Ask Ellioth something ...</button>
   <button onclick="sendPrompt()">Send</button>
   <div id="result"></div>
+  <div id="charging-time"></div>
   <div id="status"></div>
 </div>
 
@@ -250,6 +257,25 @@
         document.getElementById("result").textContent = `Fehler: ${err.message}`;
       });
   }
+
+  function fetchChargingDuration() {
+    fetch('https://10.127.0.38/terminalserver/get-charging-time.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'charging') {
+          document.getElementById('charging-time').textContent =
+            `Charging since ${data.since}`;
+        } else {
+          document.getElementById('charging-time').textContent = '';
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching charging time:', err);
+      });
+  }
+
+  setInterval(fetchChargingDuration, 60000);
+  fetchChargingDuration(); // initial call
 
   function startSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {

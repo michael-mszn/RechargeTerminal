@@ -34,7 +34,14 @@ if (!in_array($status, $allowedStatuses)) {
 }
 
 try {
-    $stmt = $pdo->prepare("UPDATE parking_slots SET status = :status WHERE slot_id = :slot_id");
+    if ($status === 'charging') {
+        // Set charging_start_time to now
+        $stmt = $pdo->prepare("UPDATE parking_slots SET status = :status, charging_start_time = datetime('now') WHERE slot_id = :slot_id");
+    } else {
+        // Clear charging_start_time
+        $stmt = $pdo->prepare("UPDATE parking_slots SET status = :status, charging_start_time = NULL WHERE slot_id = :slot_id");
+    }
+
     $stmt->execute([
         ':status' => $status,
         ':slot_id' => $slotId
