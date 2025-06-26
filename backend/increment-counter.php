@@ -23,6 +23,6 @@ if ($username) {
     echo json_encode(['status' => 'success', 'counter' => $counter]);
 } else {
     http_response_code(400);
-    echo json_encode(['status' => 'error', 'message' => 'No current user']);
+    echo json_encode(['status' => 'error', 'message' => 'Timeout. Scanne den QR code erneut']);
 }
 ?>

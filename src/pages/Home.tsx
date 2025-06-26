@@ -19,19 +19,51 @@ import carError from '../images/car-error.png';
 // @ts-ignore
 import carFullyCharged from '../images/car-fully-charged.png';
 
-
-
 type SlotStatus = 'empty' | 'charging' | 'auth_required' | 'error' | 'fully_charged';
-
-
 
 export default function Home() {
   const [username, setUsername] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
   const [counter, setCounter] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [chatReply, setChatReply] = useState<string>("");
+  const [chatReply, setChatReply] = useState<string>('');
   const [slots, setSlots] = useState<{ slot: number; status: SlotStatus }[]>([]);
+
+  // New state for current time and date strings
+  const [currentTime, setCurrentTime] = useState<string>('');
+  const [currentDate, setCurrentDate] = useState<string>('');
+
+  // Function to format date like "Samstag, 1. Februar 2025"
+  function formatDate(date: Date): string {
+    return date.toLocaleDateString('de-DE', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
+  // Function to format time like "10:00"
+  function formatTime(date: Date): string {
+    return date.toLocaleTimeString('de-DE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  // Update time and date every second
+  useEffect(() => {
+    const updateDateTime = () => {
+      const now = new Date();
+      setCurrentDate(formatDate(now));
+      setCurrentTime(formatTime(now));
+    };
+
+    updateDateTime(); // initial call
+    const interval = setInterval(updateDateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Generate QR code when no user
   useEffect(() => {
@@ -49,8 +81,7 @@ export default function Home() {
 
     const pollQRToken = () => {
       fetch('https://10.127.0.38/terminalserver/generate-token.php')
-        .then(() => {
-        })
+        .then(() => {})
         .catch(err => console.error("Token polling failed", err));
     };
 
@@ -169,24 +200,17 @@ export default function Home() {
           </div>
         </div>
         <div className="center-vertical">
-          <div>
             <div className="grid-position">
               <img src={gridPng} className="grid" />
             </div>
 
             <div className="cars-position">
-              {/*After every 4th car position, add an extra margin for better visual processing.*/}
               {slots.map(({ slot, status }) => {
                 const icon = getCarIcon(status);
                 if (!icon) return null;
 
-                // Base spacing per slot
-                const baseSpacing = 6.25;
-
-                // Number of separators to the *left* of this slot
+                const baseSpacing = 6.29;
                 const separatorsBefore = Math.floor((slot - 1) / 4);
-
-                // Final computed offset from left, based on slot index and extra gaps
                 const leftPercent = (slot - 1) * baseSpacing + separatorsBefore * 1.75;
 
                 return (
@@ -200,21 +224,24 @@ export default function Home() {
                 );
               })}
             </div>
+            <div
+              className={`qrcode-container time-element ${
+                username ? 'qr-moved' : 'qr'
+              }`}
+            >
+              {!username && <p className="time-element">Scan this QR code:</p>}
+              <canvas ref={canvasRef}></canvas>
+            </div>
 
-            <p className="time-element">Samstag, 1. Februar 2025</p>
-            <p className="time-element fontstyle-time-text">10:00</p>
+            <p className="time-element">{currentDate}</p>
+            <p className="time-element fontstyle-time-text">{currentTime}</p>
+
             <p className="time-element fontstyle-charge-text">Auto lädt seit</p>
             <p className="time-element fontstyle-charge-time">2h 34m</p>
 
-            {/* Conditional QR or Counter */}
-            <div className="auth-state time-element">
-              <div className={`qrcode time-element ${username ? 'hidden' : ''}`} id="qrcode">
-                <p className="time-element">Scan this QR code:</p>
-                <canvas ref={canvasRef}></canvas>
-              </div>
-              <div className={`counter time-element ${username ? '' : 'hidden'}`} id="counter">
-                Welcome, {displayName} — Counter: {counter}
-              </div>
+            {/* Counter only shown when user is logged in */}
+            <div className={`counter time-element ${username ? '' : 'hidden'}`} id="counter">
+              Welcome, {displayName} — Counter: {counter}
             </div>
 
             <div className="ellioth-position">
@@ -224,10 +251,9 @@ export default function Home() {
             <div className="line-position">
               <img src={linePng} className="line" />
             </div>
-              <p className="time-element dialogue-box">
-                {chatReply || "ChatGPT reply gets placed HERE"}
-              </p>
-          </div>
+            <p className="time-element dialogue-box">
+              {chatReply || "ChatGPT reply gets placed HERE"}
+            </p>
         </div>
       </div>
     </div>
