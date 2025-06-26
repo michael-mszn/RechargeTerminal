@@ -258,24 +258,25 @@
       });
   }
 
-  function fetchChargingDuration() {
-    fetch('https://10.127.0.38/terminalserver/get-charging-time.php')
+  function updateChargingInfo() {
+    fetch("https://10.127.0.38/terminalserver/get-charging-time.php")
       .then(res => res.json())
       .then(data => {
-        if (data.status === 'charging') {
-          document.getElementById('charging-time').textContent =
-            `Charging since ${data.since}`;
+        if (data.status === "charging") {
+          document.getElementById("charging-time").textContent =
+            `Charging since ${data.since} (${data.amperes}A)`;
         } else {
-          document.getElementById('charging-time').textContent = '';
+          document.getElementById("charging-time").textContent = "Not currently charging.";
         }
       })
       .catch(err => {
-        console.error('Error fetching charging time:', err);
+        console.error("Charging info error:", err);
       });
   }
 
-  setInterval(fetchChargingDuration, 60000);
-  fetchChargingDuration(); // initial call
+  setInterval(updateChargingInfo, 1000);
+  updateChargingInfo();
+
 
   function startSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {

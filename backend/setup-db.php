@@ -26,7 +26,8 @@ $db->exec("CREATE TABLE IF NOT EXISTS parking_slots (
     slot_id INTEGER PRIMARY KEY,
     status TEXT NOT NULL DEFAULT 'empty' CHECK (status IN ('empty', 'charging', 'auth_required', 'error', 'fully_charged')),
     username TEXT,
-    charging_start_time TEXT
+    charging_start_time TEXT,
+    amperes INTEGER DEFAULT 0
 )");
 
 $db->exec("INSERT OR IGNORE INTO parking_slots (slot_id, status)

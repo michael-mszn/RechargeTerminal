@@ -6,3 +6,4 @@ if (php_sapi_name() !== 'cli' && basename($_SERVER['PHP_SELF']) === basename(__F
 }
 
 define("API_KEY", "YOUR_API_KEY_HERE");
+define("TERMINAL_TOTAL_AMPERES", 60);
