@@ -110,6 +110,7 @@ $stmt->execute();
 // c) Force refresh the token so two users don't accidentally get the same token
 require_once __DIR__ . '/generate-token.php';
 $newToken = generateNewToken(true);
+$newToken = generateNewToken(true);
 
 // d) Insert or update user
 $stmt = $db->prepare("
