@@ -103,6 +103,24 @@
   <div id="status"></div>
 </div>
 
+<div id="chargingSessionsContainer" style="margin-top: 2rem;">
+  <h3>Vergangene Ladesitzungen</h3>
+  <table id="chargingSessionsTable" border="1" style="width: 100%; margin-top: 1rem;">
+    <thead>
+    <tr>
+      <th>kWh</th>
+      <th>Kosten (€)</th>
+      <th>Startzeit</th>
+      <th>Endzeit</th>
+      <th>Dauer</th>
+    </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <div id="paginationControls" style="margin-top: 1rem;"></div>
+</div>
+
+
 <script>
   let isValidated = false;
   let isDisconnected = false;
@@ -276,6 +294,60 @@
 
   setInterval(updateChargingInfo, 1000);
   updateChargingInfo();
+
+
+  let sessionsData = [];
+  let currentPage = 1;
+  const rowsPerPage = 10;
+
+  function fetchChargingSessions() {
+    fetch('https://10.127.0.38/terminalserver/get-charging-sessions.php')
+      .then(res => res.json())
+      .then(data => {
+        sessionsData = data.sessions || [];
+        currentPage = 1;
+        renderTable();
+      })
+      .catch(err => {
+        console.error('Fehler beim Laden der Sitzungen:', err);
+      });
+  }
+
+  function renderTable() {
+    const tableBody = document.querySelector('#chargingSessionsTable tbody');
+    const pagination = document.getElementById('paginationControls');
+    tableBody.innerHTML = '';
+    pagination.innerHTML = '';
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const paginatedItems = sessionsData.slice(start, start + rowsPerPage);
+
+    paginatedItems.forEach(session => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+      <td>${session.kwh.toFixed(2)}</td>
+      <td>€${session.cost.toFixed(2)}</td>
+      <td>${session.start_time}</td>
+      <td>${session.end_time}</td>
+      <td>${Math.floor(session.duration_seconds / 60)} Min</td>
+    `;
+      tableBody.appendChild(row);
+    });
+
+    const totalPages = Math.ceil(sessionsData.length / rowsPerPage);
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      btn.disabled = i === currentPage;
+      btn.onclick = () => {
+        currentPage = i;
+        renderTable();
+      };
+      pagination.appendChild(btn);
+    }
+  }
+
+  fetchChargingSessions();
 
 
   function startSpeechRecognition() {
