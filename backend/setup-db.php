@@ -29,6 +29,7 @@ $db->exec("CREATE TABLE IF NOT EXISTS parking_slots (
     status TEXT NOT NULL DEFAULT 'empty' CHECK (status IN ('empty', 'charging', 'auth_required', 'error', 'fully_charged')),
     username TEXT,
     charging_start_time TEXT,
+    session_kwh REAL DEFAULT 0,
     amperes INTEGER DEFAULT 0
 )");
 
@@ -38,5 +39,15 @@ $db->exec("INSERT OR IGNORE INTO parking_slots (slot_id, status)
     (5, 'empty'), (6, 'empty'), (7, 'empty'), (8, 'empty'),
     (9, 'empty'), (10, 'empty'), (11, 'empty'), (12, 'empty'),
     (13, 'empty'), (14, 'empty'), (15, 'empty'), (16, 'empty')");
+
+$db->exec("CREATE TABLE IF NOT EXISTS charging_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT,
+    kwh REAL,
+    cost REAL,
+    start_time TEXT,
+    end_time TEXT,
+    duration_seconds INTEGER
+)");
 
 echo "Created tables";
