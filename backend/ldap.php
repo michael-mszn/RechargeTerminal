@@ -130,7 +130,7 @@ setcookie('current_qr_code', $currentToken, [
     'expires' => time() + (14 * 24 * 60 * 60),
     'path' => '/',
     'secure' => true,
-    'httponly' => true,
+    'httponly' => false,
     'samesite' => 'Lax'
 ]);
 

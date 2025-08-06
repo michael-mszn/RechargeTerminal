@@ -32,15 +32,16 @@
     fetch('https://ellioth.othdb.de/parking-slots-api.php', {
       method: 'POST',
       body: formData,
+      credentials: 'include',
     })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+      .then(async response => {
+        const text = await response.text();
+        try {
+          const json = JSON.parse(text);
+          document.getElementById('result').textContent = JSON.stringify(json);
+        } catch (e) {
+          document.getElementById('result').textContent = 'Non-JSON response: ' + text;
         }
-        return response.json(); // This line fails if API returns HTML
-      })
-      .then(data => {
-        document.getElementById('result').textContent = JSON.stringify(data);
       })
       .catch(error => {
         document.getElementById('result').textContent = 'Request failed: ' + error;

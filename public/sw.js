@@ -1,36 +1,28 @@
-// Force immediate activation of new service worker
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
-});
-
-// Handle incoming push notifications
-self.addEventListener('push', function (event) {
-  let data = { title: 'Notification', body: 'Default message' };
-
-  try {
+self.addEventListener('push', event => {
+  let data = {};
+  if (event.data) {
     data = event.data.json();
-  } catch (e) {
-    // fallback if message is plain text
-    data.body = event.data.text();
   }
 
+  const title = data.title || 'Notification';
   const options = {
-    body: data.body
+    body: data.body || ''
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(title, options)
   );
 });
 
-// Handle notification click
-self.addEventListener('notificationclick', function(event) {
+self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow('https://ellioth.othdb.de/')
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
+      if (clientList.length > 0) {
+        return clientList[0].focus();
+      }
+      return clients.openWindow('https://ellioth.othdb.de/');
+    })
   );
 });
+

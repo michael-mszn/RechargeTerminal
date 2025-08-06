@@ -405,54 +405,75 @@
     return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
   }
 
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+  }
+
   function subscribeToPush() {
+    console.log('[🔔] subscribeToPush() called');
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      console.warn('Push notifications are not supported in this browser.');
+      console.warn('Push notifications not supported');
       return;
     }
 
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => {
-        return reg.pushManager.getSubscription()
-          .then(sub => {
-            if (sub) return sub;
-            return reg.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-            });
+    const rememberToken = getCookie('current_qr_code');
+    if (!rememberToken) {
+      console.warn('No current_qr_code cookie found');
+      return;
+    }
+
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+      console.log('SW registered:', registration);
+
+      return navigator.serviceWorker.ready;
+    }).then(reg => {
+      return reg.pushManager.getSubscription()
+        .then(sub => {
+          if (sub) return sub;
+
+          return reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
           });
-      })
-      .then(subscription => {
-        return fetch('/subscribe.php', {
-          method: 'POST',
-          body: JSON.stringify(subscription),
-          headers: { 'Content-Type': 'application/json' },
         });
-      })
-      .then(() => {
-        console.log('Push subscription completed and sent to server.');
-      })
-      .catch(err => {
-        console.error('Push subscription failed:', err);
+    }).then(subscription => {
+      // Send to server
+      return fetch('/subscribe.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          remember_token: getCookie('current_qr_code'),
+          subscription: subscription.toJSON()
+        })
       });
+    }).then(response => {
+      if (!response.ok) {
+        return response.text().then(text => {
+          throw new Error(`Server error: ${response.status} - ${text}`);
+        });
+      }
+      return response.json();
+    }).then(data => {
+      console.log('Subscribed successfully:', data);
+    }).catch(err => {
+      console.error('Subscription failed:', err);
+    });
   }
 
-  // Auto-subscribe once page is loaded and user is validated
   window.addEventListener('load', () => {
-    setTimeout(() => {
-      if (isValidated) {
-        subscribeToPush();
-      } else {
-        // Retry once validated later (optional)
-        const checkValidation = setInterval(() => {
-          if (isValidated) {
-            subscribeToPush();
-            clearInterval(checkValidation);
-          }
-        }, 1000);
-      }
-    }, 1000);
+    console.log('[🔄] Window loaded');
+
+    const rememberToken = getCookie('current_qr_code');
+    if (rememberToken) {
+      console.log('[🍪] current_qr_code found:', rememberToken);
+      subscribeToPush();
+    } else {
+      console.warn('[⚠️] current_qr_code cookie NOT found.');
+    }
   });
+
 
 </script>
 

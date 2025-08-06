@@ -50,4 +50,12 @@ $db->exec("CREATE TABLE IF NOT EXISTS charging_logs (
     duration_seconds INTEGER
 )");
 
+$db->exec("CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    remember_token TEXT NOT NULL,
+    subscription_json TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+)");
+
+
 echo "Created tables";
