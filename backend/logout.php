@@ -56,7 +56,7 @@ try {
     ]);
 
     // Redirect to login
-    header('Location: /terminalserver/ldap.php');
+    header('Location: /ldap.php');
     exit;
 
 } catch (Exception $e) {

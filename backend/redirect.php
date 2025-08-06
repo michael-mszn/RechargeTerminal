@@ -57,16 +57,16 @@ try {
         $stmt = $db->prepare("INSERT OR REPLACE INTO key_value (key, value, updated_at) VALUES ('last_activity', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
         $stmt->execute();
 
-        header("Location: /terminalserver/success.html");
+        header("Location: /success.html");
         exit;
     }
 
     // Token is valid, but no matching user
-    header("Location: /terminalserver/ldap.php");
+    header("Location: /ldap.php");
     exit;
 
 } catch (Exception $e) {
     error_log("Error in redirect.php: " . $e->getMessage());
-    header("Location: /terminalserver/ldap.php");
+    header("Location: /ldap.php");
     exit;
 }

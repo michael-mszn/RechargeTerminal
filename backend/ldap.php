@@ -135,6 +135,6 @@ setcookie('current_qr_code', $currentToken, [
 ]);
 
 // f) Redirect to success page
-header("Location: /terminalserver/success.html");
+header("Location: /success.html");
 exit;
 ?>

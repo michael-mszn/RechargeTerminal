@@ -126,7 +126,7 @@
   let isDisconnected = false;
 
   function fetchCurrentPosition() {
-    fetch('https://10.127.0.38/terminalserver/get-current-position.php')
+    fetch('https://ellioth.othdb.de/get-current-position.php')
       .then(res => res.json())
       .then(data => {
         if (data.position) {
@@ -152,7 +152,7 @@
   }
 
   function fetchFreePositions() {
-    fetch('https://10.127.0.38/terminalserver/get-free-positions.php')
+    fetch('https://ellioth.othdb.de/get-free-positions.php')
       .then(res => res.json())
       .then(data => {
         const select = document.getElementById('positionSelect');
@@ -176,7 +176,7 @@
       return;
     }
 
-    fetch('https://10.127.0.38/terminalserver/claim-position.php', {
+    fetch('https://ellioth.othdb.de/claim-position.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ position })
@@ -197,7 +197,7 @@
   }
 
   function handleDisconnectClick() {
-    fetch("https://10.127.0.38/terminalserver/disconnect.php")
+    fetch("https://ellioth.othdb.de/disconnect.php")
       .then(res => res.text())
       .then(() => {
         isDisconnected = true;
@@ -211,11 +211,11 @@
   }
 
   function handleLogoutClick() {
-    fetch("https://10.127.0.38/terminalserver/logout.php", {
+    fetch("https://ellioth.othdb.de/logout.php", {
       method: "POST"
     })
       .then(() => {
-        window.location.href = "https://10.127.0.38/terminalserver/ldap.php";
+        window.location.href = "https://ellioth.othdb.de/ldap.php";
       })
       .catch(() => {
         document.getElementById("result").textContent = "Logout fehlgeschlagen.";
@@ -237,7 +237,7 @@
 
   function incrementCounter() {
     if (notifyIfNotReady()) return;
-    fetch("https://10.127.0.38/terminalserver/increment-counter.php", {
+    fetch("https://ellioth.othdb.de/increment-counter.php", {
       method: "POST"
     })
       .then(res => res.json())
@@ -256,7 +256,7 @@
     const prompt = document.getElementById("promptInput").value.trim();
     if (!prompt) return;
 
-    fetch("https://10.127.0.38/terminalserver/chatgpt.php", {
+    fetch("https://ellioth.othdb.de/chatgpt.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
@@ -277,7 +277,7 @@
   }
 
   function updateChargingInfo() {
-    fetch("https://10.127.0.38/terminalserver/get-charging-time.php")
+    fetch("https://ellioth.othdb.de/get-charging-time.php")
       .then(res => res.json())
       .then(data => {
         if (data.status === "charging") {
@@ -301,7 +301,7 @@
   const rowsPerPage = 10;
 
   function fetchChargingSessions() {
-    fetch('https://10.127.0.38/terminalserver/get-charging-sessions.php')
+    fetch('https://ellioth.othdb.de/get-charging-sessions.php')
       .then(res => res.json())
       .then(data => {
         sessionsData = data.sessions || [];
@@ -384,7 +384,7 @@
     recognition.start();
   }
 
-  fetch("https://10.127.0.38/terminalserver/get-name.php")
+  fetch("https://ellioth.othdb.de/get-name.php")
     .then(res => res.json())
     .then(data => {
       document.getElementById("displayname").textContent = data.name || "Gast";
@@ -392,6 +392,68 @@
     .catch(() => {
       document.getElementById("displayname").textContent = "Unbekannt";
     });
+
+
+  // === Push Notification Setup ===
+  // Replace with your actual public key from PHP
+  const VAPID_PUBLIC_KEY = 'BNsoK5f2uifDBmBjnUTJrBUGK4U1WLW8mCdfT1yOJu4dLlRDLCvo9wU6XqKuBvSvH1xH2NdtLTcz-BoVCm_EfVw';
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+  }
+
+  function subscribeToPush() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.warn('Push notifications are not supported in this browser.');
+      return;
+    }
+
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => {
+        return reg.pushManager.getSubscription()
+          .then(sub => {
+            if (sub) return sub;
+            return reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+            });
+          });
+      })
+      .then(subscription => {
+        return fetch('/subscribe.php', {
+          method: 'POST',
+          body: JSON.stringify(subscription),
+          headers: { 'Content-Type': 'application/json' },
+        });
+      })
+      .then(() => {
+        console.log('Push subscription completed and sent to server.');
+      })
+      .catch(err => {
+        console.error('Push subscription failed:', err);
+      });
+  }
+
+  // Auto-subscribe once page is loaded and user is validated
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      if (isValidated) {
+        subscribeToPush();
+      } else {
+        // Retry once validated later (optional)
+        const checkValidation = setInterval(() => {
+          if (isValidated) {
+            subscribeToPush();
+            clearInterval(checkValidation);
+          }
+        }, 1000);
+      }
+    }, 1000);
+  });
+
 </script>
 
 </body>

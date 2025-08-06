@@ -7,6 +7,9 @@ if (php_sapi_name() !== 'cli' && basename($_SERVER['PHP_SELF']) === basename(__F
 
 define("API_KEY", "YOUR_API_KEY_HERE");
 
+define("VAPID_PUBLIC_KEY", "YOUR_PUBLIC_VAPID_KEY_HERE");
+define("VAPID_PRIVATE_KEY", "YOUR_PRIVATE_VAPID_KEY_HERE");
+
 define("TERMINAL_TOTAL_AMPERES", 60);
 
 // Set this to 0 during development, or if you desire for remote access to the terminal to be possible.
