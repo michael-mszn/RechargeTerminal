@@ -92,9 +92,9 @@
 </div>
 
 <div id="welcome">Willkommen, <span id="displayname">...</span>!</div>
+<div>Kontostand: <span id="balance">0.00</span> €</div>
 
 <div id="mainUI" style="display: block;">
-  <button onclick="incrementCounter()">Recharge</button>
   <textarea id="promptInput" placeholder="Ask Ellioth something ..." rows="4" cols="40"></textarea><br />
   <button onclick="startSpeechRecognition()">🎤 Ask Ellioth something ...</button>
   <button onclick="sendPrompt()">Send</button>
@@ -235,20 +235,22 @@
     return false;
   }
 
-  function incrementCounter() {
-    if (notifyIfNotReady()) return;
-    fetch("https://ellioth.othdb.de/increment-counter.php", {
-      method: "POST"
-    })
+  function fetchBalance() {
+    fetch("https://ellioth.othdb.de/get-current-users-credit.php?user=" + encodeURIComponent(getCookie('current_qr_code')))
       .then(res => res.json())
       .then(data => {
-        document.getElementById("result").textContent =
-          data.status === "success" ? `Zähler: ${data.counter}` : `Fehler: ${data.message}`;
+        if (data.balance !== undefined) {
+          document.getElementById("balance").textContent = parseFloat(data.balance).toFixed(2);
+        }
       })
-      .catch(() => {
-        document.getElementById("result").textContent = "Fehler beim Anfrage senden.";
+      .catch(err => {
+        console.error("Balance fetch error:", err);
       });
   }
+
+  setInterval(fetchBalance, 1000);
+  fetchBalance();
+
 
   function sendPrompt() {
     if (notifyIfNotReady()) return;

@@ -5,7 +5,10 @@ if (php_sapi_name() !== 'cli' && basename($_SERVER['PHP_SELF']) === basename(__F
     exit('Forbidden');
 }
 
-define("API_KEY", "YOUR_API_KEY_HERE");
+
+//DEEPSEEK API CREDENTIALS
+define('DEEPSEEK_USERNAME', 'YOUR_USERNAME_HERE');
+define('DEEPSEEK_PASSWORD', 'YOUR_PASSWORD_HERE');
 
 define("VAPID_PUBLIC_KEY", "YOUR_PUBLIC_VAPID_KEY_HERE");
 define("VAPID_PRIVATE_KEY", "YOUR_PRIVATE_VAPID_KEY_HERE");

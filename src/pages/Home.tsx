@@ -24,7 +24,6 @@ type SlotStatus = 'empty' | 'charging' | 'auth_required' | 'error' | 'fully_char
 export default function Home() {
   const [username, setUsername] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
-  const [counter, setCounter] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [chatReply, setChatReply] = useState<string>('');
   const [slots, setSlots] = useState<{ slot: number; status: SlotStatus }[]>([]);
@@ -67,7 +66,6 @@ export default function Home() {
 
   // Poll generate-token.php to refresh the token
   useEffect(() => {
-
     const pollQRToken = () => {
       fetch('https://ellioth.othdb.de/generate-token.php')
         .then(() => {})
@@ -102,7 +100,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Poll counter & displayName every second when logged in
+  // Poll displayName every second when logged in
   useEffect(() => {
     if (!username) return;
 
@@ -111,16 +109,9 @@ export default function Home() {
         const nameRes = await fetch('https://ellioth.othdb.de/get-name.php');
         const nameData = await nameRes.json();
         setDisplayName(nameData.name ?? 'User');
-
-        const counterRes = await fetch(
-          `https://ellioth.othdb.de/get-current-users-counter.php?user=${encodeURIComponent(username)}`
-        );
-        const counterData = await counterRes.json();
-        setCounter(counterData.counter ?? 'N/A');
       } catch (err) {
         console.error('Error fetching user data:', err);
         setDisplayName('User');
-        setCounter('Error');
       }
     };
 
@@ -211,57 +202,56 @@ export default function Home() {
           </div>
         </div>
         <div className="center-vertical">
-            <div className="grid-position">
-              <img src={gridPng} className="grid" />
-            </div>
+          <div className="grid-position">
+            <img src={gridPng} className="grid" />
+          </div>
 
-            <div className="cars-position">
-              {slots.map(({ slot, status }) => {
-                const icon = getCarIcon(status);
-                if (!icon) return null;
+          <div className="cars-position">
+            {slots.map(({ slot, status }) => {
+              const icon = getCarIcon(status);
+              if (!icon) return null;
 
-                const baseSpacing = 6.29;
-                const separatorsBefore = Math.floor((slot - 1) / 4);
-                const leftPercent = (slot - 1) * baseSpacing + separatorsBefore * 1.75;
+              const baseSpacing = 6.29;
+              const separatorsBefore = Math.floor((slot - 1) / 4);
+              const leftPercent = (slot - 1) * baseSpacing + separatorsBefore * 1.75;
 
-                return (
-                  <img
-                    key={slot}
-                    src={icon}
-                    className="car-icon"
-                    style={{ left: `${leftPercent}%` }}
-                    alt={`Car in slot ${slot}`}
-                  />
-                );
-              })}
-            </div>
-            <div
-              className={`qrcode-container time-element ${
-                username ? 'qr-moved' : 'qr'
-              }`}
-            >
-              {!username && <p className="time-element">Scan this QR code:</p>}
-              <canvas ref={canvasRef}></canvas>
-            </div>
+              return (
+                <img
+                  key={slot}
+                  src={icon}
+                  className="car-icon"
+                  style={{ left: `${leftPercent}%` }}
+                  alt={`Car in slot ${slot}`}
+                />
+              );
+            })}
+          </div>
+          <div
+            className={`qrcode-container time-element ${
+              username ? 'qr-moved' : 'qr'
+            }`}
+          >
+            {!username && <p className="time-element">Scan this QR code:</p>}
+            <canvas ref={canvasRef}></canvas>
+          </div>
 
-            <p className="time-element">{currentDate}</p>
-            <p className="time-element fontstyle-time-text">{currentTime}</p>
+          <p className="time-element">{currentDate}</p>
+          <p className="time-element fontstyle-time-text">{currentTime}</p>
 
-            {/* Counter only shown when user is logged in */}
-            <div className={`counter time-element ${username ? '' : 'hidden'}`} id="counter">
-              Welcome, {displayName} — Counter: {counter}
-            </div>
+          <div className={`welcome time-element ${username ? '' : 'hidden'}`} id="welcome">
+            Welcome, {displayName}
+          </div>
 
-            <div className="ellioth-position">
-              <img src={elliothPng} className="ellioth" alt="Ellioth" />
-            </div>
-            <p className="time-element fontstyle-ellioth-name">Ellioth</p>
-            <div className="line-position">
-              <img src={linePng} className="line" />
-            </div>
-            <p className="time-element dialogue-box">
-              {chatReply || "ChatGPT reply gets placed HERE"}
-            </p>
+          <div className="ellioth-position">
+            <img src={elliothPng} className="ellioth" alt="Ellioth" />
+          </div>
+          <p className="time-element fontstyle-ellioth-name">Ellioth</p>
+          <div className="line-position">
+            <img src={linePng} className="line" />
+          </div>
+          <p className="time-element dialogue-box">
+            {chatReply || "ChatGPT reply gets placed HERE"}
+          </p>
         </div>
       </div>
     </div>

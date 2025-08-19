@@ -114,8 +114,8 @@ $newToken = generateNewToken(true);
 
 // d) Insert or update user
 $stmt = $db->prepare("
-    INSERT INTO users (username, name, surname, email, last_login, counter, remember_token)
-    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0, ?)
+    INSERT INTO users (username, name, surname, email, last_login, remember_token)
+    VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
     ON CONFLICT(username) DO UPDATE SET
         last_login = CURRENT_TIMESTAMP,
         name = excluded.name,
