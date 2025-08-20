@@ -39,7 +39,9 @@ if (!$user) {
 $username = $user['username'];
 
 // 2. Get user's charging slot
-$stmt = $pdo->prepare("SELECT slot_id, charging_start_time FROM parking_slots WHERE username = :username AND status = 'charging'");
+$stmt = $pdo->prepare("SELECT slot_id, charging_start_time, amperes
+                       FROM parking_slots
+                       WHERE username = :username AND status = 'charging'");
 $stmt->execute([':username' => $username]);
 $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -49,45 +51,24 @@ if (!$row || empty($row['charging_start_time'])) {
 }
 
 $slotId = (int)$row['slot_id'];
+$amperes = (int)$row['amperes'];
+
 $startTime = strtotime($row['charging_start_time']);
 if (!$startTime) {
     echo json_encode(['status' => 'error', 'message' => 'Invalid charging_start_time format.']);
     exit;
 }
 
-// 3. Determine group range (every 4 slots share one terminal)
-$groupStart = (floor(($slotId - 1) / 4) * 4) + 1;
-$groupEnd = $groupStart + 3;
-
-// 4. Get charging cars in the group
-$stmt = $pdo->prepare("SELECT slot_id FROM parking_slots WHERE slot_id BETWEEN :start AND :end AND status = 'charging'");
-$stmt->execute([':start' => $groupStart, ':end' => $groupEnd]);
-$chargingSlots = $stmt->fetchAll(PDO::FETCH_COLUMN);
-
-$chargingCount = count($chargingSlots);
-$amperesPerCar = $chargingCount > 0 ? floor(TERMINAL_TOTAL_AMPERES / $chargingCount) : 0;
-
-// 5. Update amperes for all cars charging in this group
-if ($chargingCount > 0) {
-    $updateStmt = $pdo->prepare("UPDATE parking_slots SET amperes = :amp WHERE slot_id = :slot_id");
-    foreach ($chargingSlots as $sId) {
-        $updateStmt->execute([
-            ':amp' => $amperesPerCar,
-            ':slot_id' => $sId
-        ]);
-    }
-}
-
-// 6. Format charging time
+// 3. Format charging time
 $now = time();
 $elapsedSeconds = $now - $startTime;
 $hours = floor($elapsedSeconds / 3600);
 $minutes = floor(($elapsedSeconds % 3600) / 60);
 
-// 7. Respond
+// 4. Respond
 echo json_encode([
     'status' => 'charging',
     'slot_id' => $slotId,
     'since' => "{$hours}h {$minutes}min",
-    'amperes' => $amperesPerCar
+    'amperes' => $amperes
 ]);

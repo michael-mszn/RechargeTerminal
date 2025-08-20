@@ -101,6 +101,11 @@
   <div id="result"></div>
   <div id="charging-time"></div>
   <div id="status"></div>
+  <div id="nicenessControl" style="margin-top:2rem; display:none;">
+    <label for="nicenessSlider">🤝 Niceness (0 = selfish, 50% = maximum nice):</label><br>
+    <input type="range" id="nicenessSlider" min="0" max="50" value="0" step="1" />
+    <span id="nicenessValue">0%</span>
+  </div>
 </div>
 
 <div id="chargingSessionsContainer" style="margin-top: 2rem;">
@@ -278,6 +283,34 @@
       });
   }
 
+  // Update slider value display
+  document.getElementById("nicenessSlider").addEventListener("input", function() {
+    document.getElementById("nicenessValue").textContent = this.value + "%";
+  });
+
+  // Send niceness updates to server
+  document.getElementById("nicenessSlider").addEventListener("change", function() {
+    const val = parseInt(this.value, 10) / 100; // convert to 0–0.5
+    fetch("https://ellioth.othdb.de/update-niceness.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ niceness: val })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status !== "ok") {
+          document.getElementById("status").textContent = "Fehler: " + (data.message || "Niceness update fehlgeschlagen.");
+        } else {
+          updateChargingInfo(); // refresh amperes immediately
+        }
+      })
+      .catch(err => {
+        console.error("Niceness error:", err);
+        document.getElementById("status").textContent = "Fehler beim Senden der Niceness.";
+      });
+  });
+
+  // Show slider only when charging & update amperes
   function updateChargingInfo() {
     fetch("https://ellioth.othdb.de/get-charging-time.php")
       .then(res => res.json())
@@ -285,8 +318,10 @@
         if (data.status === "charging") {
           document.getElementById("charging-time").textContent =
             `Charging since ${data.since} (${data.amperes}A)`;
+          document.getElementById("nicenessControl").style.display = "block";
         } else {
           document.getElementById("charging-time").textContent = "Not currently charging.";
+          document.getElementById("nicenessControl").style.display = "none";
         }
       })
       .catch(err => {
@@ -294,6 +329,7 @@
       });
   }
 
+  // Poll every second to catch cars joining/leaving
   setInterval(updateChargingInfo, 1000);
   updateChargingInfo();
 

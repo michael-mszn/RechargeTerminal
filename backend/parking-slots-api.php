@@ -8,6 +8,7 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST');
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/update-amperes.php';
 require_once __DIR__ . '/vendor/autoload.php';
 
 use Minishlink\WebPush\WebPush;
@@ -46,70 +47,64 @@ try {
         $stmt = $pdo->prepare("UPDATE parking_slots SET status = :status WHERE slot_id = :slot_id");
     }
 
-    $stmt->execute([
-        ':status' => $status,
-        ':slot_id' => $slotId
-    ]);
+    $stmt->execute([':status' => $status, ':slot_id' => $slotId]);
 
-    if ($stmt->rowCount() > 0) {
-        // Step 1: Find username assigned to this slot
-        $userStmt = $pdo->prepare("SELECT username FROM parking_slots WHERE slot_id = :slot_id");
-        $userStmt->execute([':slot_id' => $slotId]);
-        $username = $userStmt->fetchColumn();
+    // Recalculate amperes whenever a car joins/leaves charging
+    recalculateAmperes($pdo, $slotId);
 
-        if ($username) {
-            // Step 2: Get remember_token for the user
-            $tokenStmt = $pdo->prepare("SELECT remember_token FROM users WHERE username = :username");
-            $tokenStmt->execute([':username' => $username]);
-            $rememberToken = $tokenStmt->fetchColumn();
+    // Push notifications (existing code)
+    $userStmt = $pdo->prepare("SELECT username FROM parking_slots WHERE slot_id = :slot_id");
+    $userStmt->execute([':slot_id' => $slotId]);
+    $username = $userStmt->fetchColumn();
 
-            if ($rememberToken) {
-                // Step 3: Get push subscriptions
-                $subsStmt = $pdo->prepare("SELECT subscription_json FROM push_subscriptions WHERE remember_token = :remember_token");
-                $subsStmt->execute([':remember_token' => $rememberToken]);
-                $subscriptions = $subsStmt->fetchAll(PDO::FETCH_COLUMN);
+    if ($username) {
+        $tokenStmt = $pdo->prepare("SELECT remember_token FROM users WHERE username = :username");
+        $tokenStmt->execute([':username' => $username]);
+        $rememberToken = $tokenStmt->fetchColumn();
 
-                if ($subscriptions) {
-                    $webPush = new WebPush([
-                        'VAPID' => [
-                            'subject' => 'mailto:you@example.com',
-                            'publicKey' => VAPID_PUBLIC_KEY,
-                            'privateKey' => VAPID_PRIVATE_KEY,
-                        ]
-                    ]);
+        if ($rememberToken) {
+            $subsStmt = $pdo->prepare("SELECT subscription_json FROM push_subscriptions WHERE remember_token = :remember_token");
+            $subsStmt->execute([':remember_token' => $rememberToken]);
+            $subscriptions = $subsStmt->fetchAll(PDO::FETCH_COLUMN);
 
-                    $messages = [
-                        'charging' => '🔌 Your car has started charging.',
-                        'fully_charged' => '✅ Your car is fully charged!',
-                        'auth_required' => '🔒 Please authenticate to start charging.',
-                        'error' => '⚠️ There was an error with your charging session. Did you run out of balance?',
-                        'empty' => 'ℹ️ Your car has been unplugged.',
-                    ];
+            if ($subscriptions) {
+                $webPush = new WebPush([
+                    'VAPID' => [
+                        'subject' => 'mailto:you@example.com',
+                        'publicKey' => VAPID_PUBLIC_KEY,
+                        'privateKey' => VAPID_PRIVATE_KEY,
+                    ]
+                ]);
 
-                    $body = $messages[$status] ?? 'Your parking slot status has changed.';
+                $messages = [
+                    'charging' => '🔌 Your car has started charging.',
+                    'fully_charged' => '✅ Your car is fully charged!',
+                    'auth_required' => '🔒 Please authenticate to start charging.',
+                    'error' => '⚠️ There was an error with your charging session.',
+                    'empty' => 'ℹ️ Your car has been unplugged.',
+                ];
 
-                    foreach ($subscriptions as $subJson) {
-                        $subscription = Subscription::create(json_decode($subJson, true));
+                $body = $messages[$status] ?? 'Your parking slot status has changed.';
 
-                        $webPush->queueNotification($subscription, json_encode([
-                            'title' => 'Parking Slot Update',
-                            'body' => $body,
-                        ]));
-                    }
+                foreach ($subscriptions as $subJson) {
+                    $subscription = Subscription::create(json_decode($subJson, true));
+                    $webPush->queueNotification($subscription, json_encode([
+                        'title' => 'Parking Slot Update',
+                        'body' => $body,
+                    ]));
+                }
 
-                    foreach ($webPush->flush() as $report) {
-                        if (!$report->isSuccess()) {
-                            error_log('Push failed: ' . $report->getReason());
-                        }
+                foreach ($webPush->flush() as $report) {
+                    if (!$report->isSuccess()) {
+                        error_log('Push failed: ' . $report->getReason());
                     }
                 }
             }
         }
-
-        echo json_encode(['success' => true, 'message' => "Slot $slotId updated to '$status'."]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'No update made. Slot may not exist.']);
     }
+
+    echo json_encode(['success' => true, 'message' => "Slot $slotId updated to '$status'."]);
+
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'error' => 'Database error.', 'details' => $e->getMessage()]);

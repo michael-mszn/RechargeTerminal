@@ -29,7 +29,8 @@ $db->exec("CREATE TABLE IF NOT EXISTS parking_slots (
     username TEXT,
     charging_start_time TEXT,
     session_kwh REAL DEFAULT 0,
-    amperes INTEGER DEFAULT 0
+    amperes INTEGER DEFAULT 0,
+    niceness REAL DEFAULT 0 CHECK (niceness >= 0 AND niceness <= 0.5)
 )");
 
 $db->exec("INSERT OR IGNORE INTO parking_slots (slot_id, status)
