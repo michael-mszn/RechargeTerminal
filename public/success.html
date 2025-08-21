@@ -283,14 +283,51 @@
       });
   }
 
+
+  // --- PRELOAD NICENESS FROM SERVER ON PAGE LOAD ---
+  let nicenessPreloaded = false;   // true once loaded from DB
+  let nicenessUserTouched = false; // prevents overwriting after user moves slider
+
+  function setNicenessUIFromFraction(fraction) {
+    // DB stores 0..0.5, slider uses 0..50
+    if (typeof fraction !== "number" || isNaN(fraction)) return;
+    const percent = Math.round(Math.max(0, Math.min(0.5, fraction)) * 100);
+    const slider = document.getElementById("nicenessSlider");
+    const label  = document.getElementById("nicenessValue");
+    if (!slider || !label) return;
+    slider.value = String(percent);
+    label.textContent = percent + "%";
+  }
+
+  function preloadNicenessFromServer() {
+    fetch("https://ellioth.othdb.de/get-current-niceness.php")
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.status === "success" && typeof data.niceness === "number") {
+          if (!nicenessUserTouched) {
+            setNicenessUIFromFraction(data.niceness);
+          }
+          nicenessPreloaded = true;
+        }
+      })
+      .catch(err => {
+        console.debug("Preload niceness failed:", err);
+      });
+  }
+
+  // Call once on page load
+  preloadNicenessFromServer();
+
+  // --- SLIDER LISTENERS ---
   // Update slider value display
   document.getElementById("nicenessSlider").addEventListener("input", function() {
     document.getElementById("nicenessValue").textContent = this.value + "%";
+    nicenessUserTouched = true;
   });
 
   // Send niceness updates to server
   document.getElementById("nicenessSlider").addEventListener("change", function() {
-    const val = parseInt(this.value, 10) / 100; // convert to 0–0.5
+    const val = parseInt(this.value, 10) / 100; // convert 0–50 -> 0–0.5
     fetch("https://ellioth.othdb.de/update-niceness.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -299,18 +336,20 @@
       .then(res => res.json())
       .then(data => {
         if (data.status !== "ok") {
-          document.getElementById("status").textContent = "Fehler: " + (data.message || "Niceness update fehlgeschlagen.");
+          document.getElementById("status").textContent =
+            "Fehler: " + (data.message || "Niceness update fehlgeschlagen.");
         } else {
           updateChargingInfo(); // refresh amperes immediately
         }
       })
       .catch(err => {
         console.error("Niceness error:", err);
-        document.getElementById("status").textContent = "Fehler beim Senden der Niceness.";
+        document.getElementById("status").textContent =
+          "Fehler beim Senden der Niceness.";
       });
   });
 
-  // Show slider only when charging & update amperes
+  // --- CHARGING INFO POLLING ---
   function updateChargingInfo() {
     fetch("https://ellioth.othdb.de/get-charging-time.php")
       .then(res => res.json())
@@ -319,9 +358,18 @@
           document.getElementById("charging-time").textContent =
             `Charging since ${data.since} (${data.amperes}A)`;
           document.getElementById("nicenessControl").style.display = "block";
+
+          // If niceness not yet loaded, try again when charging is confirmed
+          if (!nicenessPreloaded && !nicenessUserTouched) {
+            preloadNicenessFromServer();
+          }
         } else {
-          document.getElementById("charging-time").textContent = "Not currently charging.";
+          document.getElementById("charging-time").textContent =
+            "Not currently charging.";
           document.getElementById("nicenessControl").style.display = "none";
+          // Reset preload flags for next session
+          nicenessPreloaded = false;
+          nicenessUserTouched = false;
         }
       })
       .catch(err => {
@@ -332,6 +380,7 @@
   // Poll every second to catch cars joining/leaving
   setInterval(updateChargingInfo, 1000);
   updateChargingInfo();
+
 
 
   let sessionsData = [];
