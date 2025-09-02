@@ -19,9 +19,11 @@ export default defineConfig({
     }
   ],
   server: {
+    host: '0.0.0.0',  // allow external access, not just localhost
+    port: 5173,       // can change if needed
     proxy: {
-      '/home': 'http://localhost:8000',
+      '/home': 'http://127.0.0.1:8000', // PHP backend still runs locally on the server
     },
-    open: true,
+    open: false, // don’t auto-open a browser on a headless server
   }
 });
