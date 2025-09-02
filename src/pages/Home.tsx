@@ -67,7 +67,7 @@ export default function Home() {
   // Poll generate-token.php to refresh the token
   useEffect(() => {
     const pollQRToken = () => {
-      fetch('https://ellioth.othdb.de/generate-token.php')
+      fetch('/api/generate-token.php')
         .then(() => {})
         .catch(err => console.error("Token polling failed", err));
     };
@@ -82,7 +82,7 @@ export default function Home() {
   useEffect(() => {
     const checkCurrentUser = async () => {
       try {
-        const res = await fetch('https://ellioth.othdb.de/get-current-username.php');
+        const res = await fetch('/api/get-current-username.php');
         const data = await res.json();
         if (!data.username) {
           setUsername(null);
@@ -106,7 +106,7 @@ export default function Home() {
 
     const fetchUserData = async () => {
       try {
-        const nameRes = await fetch('https://ellioth.othdb.de/get-name.php');
+        const nameRes = await fetch('api/get-name.php');
         const nameData = await nameRes.json();
         setDisplayName(nameData.name ?? 'User');
       } catch (err) {
@@ -126,7 +126,7 @@ export default function Home() {
 
     const pollReply = async () => {
       try {
-        const res = await fetch("https://ellioth.othdb.de/get-chatgpt-reply.php");
+        const res = await fetch('api/get-chatgpt-reply.php');
         const data = await res.json();
 
         if (data.reply && data.reply.trim() !== "") {
@@ -147,7 +147,7 @@ export default function Home() {
   useEffect(() => {
     const fetchSlotStatus = async () => {
       try {
-        const res = await fetch('https://ellioth.othdb.de/get-parking-status.php');
+        const res = await fetch('api/get-parking-status.php');
         const data = await res.json();
         setSlots(data);
       } catch (err) {
@@ -164,7 +164,7 @@ export default function Home() {
   useEffect(() => {
     const updateQRCode = async () => {
       try {
-        const res = await fetch('https://ellioth.othdb.de/get-current-qr-code.php');
+        const res = await fetch('api/get-current-qr-code.php');
         const data = await res.json();
         const qrUrl = data.current_qr_code;
         if (canvasRef.current) {
