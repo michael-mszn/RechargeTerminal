@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [
     preact(),
     {
-      name: 'redirect-root-to-home',
+      name: 'redirect-root-to-terminal',
       configureServer(server) {
         server.middlewares.use((req, res, next) => {
           if (req.url === '/') {
@@ -20,9 +20,9 @@ export default defineConfig({
   ],
   server: {
     host: '0.0.0.0',  // allow external access, not just localhost
-    port: 5173,       // can change if needed
+    port: 5173,
     proxy: {
-      '/terminal': 'http://127.0.0.1:8000', // PHP backend still runs locally on the server
+      '/api': 'http://127.0.0.1:8000', // forward all /api requests to PHP dev server
     },
     open: false, // don’t auto-open a browser on a headless server
   }
