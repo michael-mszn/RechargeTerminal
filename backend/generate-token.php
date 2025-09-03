@@ -1,15 +1,16 @@
 <?php
 
-header("Access-Control-Allow-Origin: http://localhost:5173");
+// CORS for your production domain
+header("Access-Control-Allow-Origin: https://ellioth.othdb.de");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-// Handle preflight OPTIONS requests
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+// Handle preflight OPTIONS safely
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+if ($method === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
-
 
 function generateNewToken($forceRotate = false) {
     $db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
@@ -19,12 +20,11 @@ function generateNewToken($forceRotate = false) {
         $stmt = $db->prepare("SELECT updated_at FROM key_value WHERE key = 'current_qr_code'");
         $stmt->execute();
         $lastUpdated = $stmt->fetchColumn();
+        $shouldRotate = true;
 
         if ($lastUpdated) {
             $lastTimestamp = strtotime($lastUpdated);
             $shouldRotate = (time() - $lastTimestamp) >= 60;
-        } else {
-            $shouldRotate = true;
         }
     } else {
         $shouldRotate = true;
@@ -51,8 +51,10 @@ function generateNewToken($forceRotate = false) {
     return $stmt->fetchColumn();
 }
 
-// If called via HTTP request (e.g. directly), return JSON:
-if (php_sapi_name() !== 'cli' && !debug_backtrace()) {
+// Return JSON for HTTP requests
+if (php_sapi_name() !== 'cli') {
     header('Content-Type: application/json');
-    echo json_encode(['token' => generateNewToken(isset($_GET['force']) && $_GET['force'] === '1')]);
+    echo json_encode([
+        'token' => generateNewToken(isset($_GET['force']) && $_GET['force'] === '1')
+    ]);
 }

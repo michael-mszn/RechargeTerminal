@@ -1,35 +1,56 @@
 #!/bin/bash
 
 # -------------------------------
-# start_linux.sh - restartable script
+# start_linux.sh - production build with cleanup
 # -------------------------------
 
 # Set project directory
 PROJECT_DIR="/home/michael/ellioth"
 
-# Log files
-PHP_LOG="$PROJECT_DIR/php.log"
-NPM_LOG="$PROJECT_DIR/npm.log"
+# Log file
+BUILD_LOG="$PROJECT_DIR/build.log"
+DB_LOG="$PROJECT_DIR/setup-db.log"
 
-# Kill any existing PHP server (port 8000)
-echo "Stopping existing PHP servers..."
-pkill -f "php -S 0.0.0.0:8000" 2>/dev/null
-
-# Kill any existing Node/Vite dev server
-echo "Stopping existing Node/Vite servers..."
+# -------------------------------
+# Cleanup old processes (optional)
+# -------------------------------
+echo "Stopping any stray Node/Vite processes..."
 pkill -f "vite" 2>/dev/null
+pkill -f "node" 2>/dev/null
 
+# -------------------------------
 # Go to project directory
+# -------------------------------
 cd "$PROJECT_DIR" || { echo "Project directory not found!"; exit 1; }
 
-# Start PHP backend
-echo "Starting PHP server on port 8000..."
-nohup php -S 0.0.0.0:8000 -t backend > "$PHP_LOG" 2>&1 &
+# -------------------------------
+# Build frontend
+# -------------------------------
+echo "Building frontend with Vite..."
+npm run build > "$BUILD_LOG" 2>&1
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed! Check $BUILD_LOG for details."
+  exit 1
+fi
+echo "✅ Build finished. Output in $PROJECT_DIR/dist"
 
-# Start npm dev server
-echo "Starting npm dev server..."
-nohup npm run dev > "$NPM_LOG" 2>&1 &
+# -------------------------------
+# Setup PHP database
+# -------------------------------
+echo "Setting up PHP database..."
+php backend/setup-db.php > "$DB_LOG" 2>&1
+if [ $? -ne 0 ]; then
+  echo "❌ Database setup failed! Check $DB_LOG for details."
+  exit 1
+fi
+echo "✅ Database setup complete"
 
-echo "Servers started!"
-echo "PHP logs: $PHP_LOG"
-echo "NPM logs: $NPM_LOG"
+# -------------------------------
+# Reload Apache
+# -------------------------------
+echo "Reloading Apache..."
+sudo systemctl reload apache2
+
+echo "✅ Done! Frontend available at https://ellioth.othdb.de/"
+echo "Build logs: $BUILD_LOG"
+echo "DB logs:    $DB_LOG"
