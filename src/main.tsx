@@ -1,11 +1,15 @@
 import { render } from 'preact';
+import { Router, Route } from 'preact-router';
 import Home from './pages/Home';
-
-//import { App } from './App';
-
-//render(<App />, document.getElementById('app') as HTMLElement);
+import Profile from './pages/Profile';
 
 const root = document.getElementById('react-root');
 if (root) {
-  render(<Home />, root);
+  render(
+    <Router>
+      <Route path="/" component={Home} />
+      <Route path="/profile" component={Profile} />
+    </Router>,
+    root
+  );
 }
