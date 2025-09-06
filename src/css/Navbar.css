@@ -1,0 +1,70 @@
+.navbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    display: flex;
+    justify-content: space-around;
+    flex-direction: row-reverse;
+    align-items: stretch;
+
+    background-color: #fff;
+    border-top: 1px solid #ddd;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+
+    z-index: 1000;
+}
+
+.nav-button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+    text-decoration: none;
+
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: 0.8rem;
+
+    color: #444;
+    transition: all 0.2s ease;
+    padding: 8px 0;
+}
+
+/* Active slot: pink background + white text */
+.nav-button.active {
+    background-color: #ff3b92;
+    color: #fff !important; /* enforce white text */
+}
+
+/* Default hover/focus: pink text (only when not active) */
+.nav-button:hover:not(.active),
+.nav-button:focus:not(.active) {
+    color: #ff3b92;
+}
+
+/* Icon styling */
+.nav-icon {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 2px;
+    object-fit: contain;
+
+    filter: grayscale(100%) brightness(0) invert(0); /* default black */
+    transition: filter 0.2s ease;
+}
+
+/* Hover: icon turns pink (only when not active) */
+.nav-button:hover:not(.active) .nav-icon,
+.nav-button:focus:not(.active) .nav-icon {
+    filter: invert(48%) sepia(99%) saturate(3300%) hue-rotate(310deg) brightness(95%) contrast(105%);
+}
+
+/* Active: white icon */
+.nav-button.active .nav-icon {
+    filter: brightness(0) invert(1);
+}
