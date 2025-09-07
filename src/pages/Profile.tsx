@@ -125,23 +125,34 @@ export default function Profile() {
 
   // Pagination display logic: max 3 consecutive pages
   const getPagesToShow = () => {
-    let pages = [];
-    if (totalPages <= 3) {
-      pages = Array.from({ length: totalPages }, (_, i) => i + 1);
-    } else if (currentPage === 1) {
-      pages = [1, 2, 3];
-    } else if (currentPage === totalPages) {
-      pages = [totalPages - 2, totalPages - 1, totalPages];
-    } else {
-      pages = [currentPage - 1, currentPage, currentPage + 1];
+    const pages: number[] = [];
+    const maxPages = 3;
+
+    let start = currentPage - 1;
+    let end = currentPage + 1;
+
+    // Clamp the range
+    if (start < 1) {
+      start = 1;
+      end = Math.min(maxPages, totalPages);
+    } else if (end > totalPages) {
+      end = totalPages;
+      start = Math.max(1, totalPages - (maxPages - 1));
     }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
     return pages;
   };
   const pagesToShow = getPagesToShow();
 
   return (
     <div class="profile-container">
-      <p ref={nameRef} class="profile-name">Max Tim Mustermann</p>
+      <p ref={nameRef} class="profile-name">
+        Max Tim Mustermann
+      </p>
       <img src={profilePic} alt="Profile" class="profile-picture" />
       <p class="profile-balance">Balance: 183.86€</p>
 
@@ -166,62 +177,69 @@ export default function Profile() {
       <div
         ref={historyRef}
         class="drawer-content-wrapper"
-        style={{ maxHeight: isHistoryOpen ? `${historyRef.current?.scrollHeight}px` : '0px' }}
+        style={{
+          maxHeight: isHistoryOpen
+            ? `${historyRef.current?.scrollHeight}px`
+            : '0px',
+        }}
       >
-        <div class="drawer-content-inner">
+        <div className="drawer-content-inner">
           <p class="stats-title">CHARGING HISTORY</p>
 
           {/* History Table */}
           <table class="history-table">
             <thead>
-            <tr>
-              <th>DATE</th>
-              <th>KWH</th>
-              <th>COSTS</th>
-              <th>MINUTES</th>
-            </tr>
+              <tr>
+                <th>DATE</th>
+                <th>KWH</th>
+                <th>COSTS</th>
+                <th>MINUTES</th>
+              </tr>
             </thead>
             <tbody>
-            {paddedData.map((row, idx) => (
-              <tr key={idx}>
-                <td>{row.date}</td>
-                <td>{row.kWh}</td>
-                <td>{row.cost}</td>
-                <td>{row.duration}</td>
-              </tr>
-            ))}
+              {paddedData.map((row, idx) => (
+                <tr key={idx}>
+                  <td>{row.date}</td>
+                  <td>{row.kWh}</td>
+                  <td>{row.cost}</td>
+                  <td>{row.duration === 0 ? '\u2007' : row.duration}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
 
           {/* Pagination */}
-          <div class="history-pagination">
-            {currentPage > 1 && (
-              <button
-                class={`history-pagination-arrow ${prevPressed ? 'pressed' : ''}`}
-                onClick={() => handlePageChange(currentPage - 1, 'prev')}
-              >
-                ◀
-              </button>
-            )}
+          <div className="history-pagination">
+            {/* Always render arrows */}
+            <button
+              className={`history-pagination-arrow ${prevPressed ? 'pressed' : ''}`}
+              onClick={() => handlePageChange(currentPage - 1, 'prev')}
+              disabled={currentPage === 1} // disable at first page
+              style={{ visibility: currentPage === 1 ? 'hidden' : 'visible' }}
+            >
+              ◀
+            </button>
 
             {pagesToShow.map((p) => (
               <button
                 key={p}
-                class={`history-pagination-page ${p === currentPage ? 'active' : ''}`}
+                className={`history-pagination-page ${p === currentPage ? 'active' : ''}`}
                 onClick={() => handlePageChange(p)}
               >
                 {p}
               </button>
             ))}
 
-            {currentPage < totalPages && (
-              <button
-                class={`history-pagination-arrow ${nextPressed ? 'pressed' : ''}`}
-                onClick={() => handlePageChange(currentPage + 1, 'next')}
-              >
-                ▶
-              </button>
-            )}
+            <button
+              className={`history-pagination-arrow ${nextPressed ? 'pressed' : ''}`}
+              onClick={() => handlePageChange(currentPage + 1, 'next')}
+              disabled={currentPage === totalPages} // disable at last page
+              style={{
+                visibility: currentPage === totalPages ? 'hidden' : 'visible',
+              }}
+            >
+              ▶
+            </button>
           </div>
         </div>
       </div>
@@ -239,7 +257,11 @@ export default function Profile() {
       <div
         ref={statsRef}
         class="drawer-content-wrapper"
-        style={{ maxHeight: isStatsOpen ? `${statsRef.current?.scrollHeight}px` : '0px' }}
+        style={{
+          maxHeight: isStatsOpen
+            ? `${statsRef.current?.scrollHeight}px`
+            : '0px',
+        }}
       >
         <div class="drawer-content-inner">
           <p class="stats-title">MINUTES CHARGED PER DAY</p>
@@ -260,21 +282,42 @@ export default function Profile() {
           {/* Pillar chart */}
           <div class="pillar-chart" style={{ height: `${chartHeight}px` }}>
             {pinkLines.map((line, idx) => {
-              const bottomPercent = (line / maxValue) * (100 - (baselineOffset / chartHeight) * 100);
-              return <div key={idx} class="pillar-chart-line" style={{ bottom: `calc(${bottomPercent}% + ${baselineOffset}px)` }}></div>;
+              const bottomPercent =
+                (line / maxValue) *
+                (100 - (baselineOffset / chartHeight) * 100);
+              return (
+                <div
+                  key={idx}
+                  class="pillar-chart-line"
+                  style={{
+                    bottom: `calc(${bottomPercent}% + ${baselineOffset}px)`,
+                  }}
+                ></div>
+              );
             })}
 
             <div class="pillar-chart-separator"></div>
 
             {pillars.map((p, idx) => {
-              const heightPercent = (p.value / maxValue) * (100 - (baselineOffset / chartHeight) * 100);
+              const heightPercent =
+                (p.value / maxValue) *
+                (100 - (baselineOffset / chartHeight) * 100);
               const minHeightPercent = (25 / chartHeight) * 100;
               const isClamped = heightPercent < minHeightPercent;
-              const finalHeight = isClamped ? minHeightPercent + 3 : heightPercent;
+              const finalHeight = isClamped
+                ? minHeightPercent + 3
+                : heightPercent;
 
               return (
                 <div class="pillar" key={idx}>
-                  <div class="pillar-bar" style={{ height: `${finalHeight}%`, bottom: `${baselineOffset}px`, position: 'absolute' }}>
+                  <div
+                    class="pillar-bar"
+                    style={{
+                      height: `${finalHeight}%`,
+                      bottom: `${baselineOffset}px`,
+                      position: 'absolute',
+                    }}
+                  >
                     <span class="pillar-value">{p.value}</span>
                   </div>
                   <span class="pillar-label">{p.day}</span>
