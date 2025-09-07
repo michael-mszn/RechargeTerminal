@@ -124,19 +124,18 @@
     width: 85%;
     margin: 0 auto 2vh auto;
     position: relative;
-    height: 320px; /* FIXED height ensures % heights inside work */
+    height: 320px;
 }
 
-/* Pink horizontal lines */
 .pillar-chart-line {
     position: absolute;
     left: 0;
     width: 100%;
     height: 2px;
     background-color: #ff3b92;
+    z-index: 0; /* behind pillars */
 }
 
-/* Pillars */
 .pillar {
     display: flex;
     flex-direction: column;
@@ -144,26 +143,43 @@
     justify-content: flex-end;
     flex: 1;
     margin: 0 0.5vw;
-    height: 100%; /* now has a proper reference */
+    position: relative; /* needed for absolute children like separator */
+    height: 100%;
+    z-index: 1; /* ensure it’s above pink chart lines */
 }
 
 .pillar-bar {
     background-color: #a8e792;
-    width: 40%;
-    border-radius: 6px 6px 0 0;
+    width: 50%; /* thicker */
+    border-radius: 6px 6px 6px 6px;
     display: flex;
-    align-items: flex-end;
+    align-items: flex-end; /* bottom-aligned numbers */
     justify-content: center;
+    position: relative;
+    z-index: 2; /* in front of chart lines */
+    padding-bottom: 4px;
 }
 
 .pillar-value {
     color: #124c21;
     font-weight: bold;
-    font-size: 3vw;
+    font-size: 4vw;
     transform: rotate(-90deg);
     white-space: nowrap;
+    position: absolute;  /* stays inside the pillar-bar */
+    bottom: 2vw;       /* small gap above the bottom of the pillar */
+    z-index: 3;          /* ensures it’s in front of everything */
+}
+
+
+.pillar-separator {
     position: absolute;
-    bottom: 4px;
+    bottom: -1.5em; /* just above day label */
+    left: 0;
+    width: 100%;
+    height: 4px; /* slightly thicker */
+    background-color: #ff3b92;
+    z-index: 4; /* above chart lines */
 }
 
 .pillar-label {
@@ -171,4 +187,5 @@
     color: #000;
     margin-top: 0.5vh;
 }
+
 

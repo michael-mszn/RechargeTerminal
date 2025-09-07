@@ -44,18 +44,21 @@ export default function Profile() {
     { day: 'TH', value: 150 },
     { day: 'FR', value: 180 },
     { day: 'SA', value: 50 },
-    { day: 'SU', value: 300 },
+    { day: 'SU', value: 260 },
   ];
 
   // Compute max value for scaling (next 50)
   const maxValue = Math.ceil(Math.max(...pillars.map(p => p.value)) / 50) * 50;
 
   // 6 pink horizontal lines
-  const pinkLines = Array.from({ length: 6 }, (_, i) => ((i + 1) / 6) * maxValue);
+  const pinkLines = Array.from({ length: 6 }, (_, i) => ((i + 1) / 12) * maxValue * 2);
+
 
   return (
     <div class="profile-container">
-      <p ref={nameRef} class="profile-name">Max Tim Mustermann</p>
+      <p ref={nameRef} class="profile-name">
+        Max Tim Mustermann
+      </p>
       <img src={profilePic} alt="Profile" class="profile-picture" />
       <p class="profile-balance">Balance: 183.86€</p>
 
@@ -80,7 +83,11 @@ export default function Profile() {
       <div
         ref={historyRef}
         class="drawer-content-wrapper"
-        style={{ maxHeight: isHistoryOpen ? `${historyRef.current?.scrollHeight}px` : '0px' }}
+        style={{
+          maxHeight: isHistoryOpen
+            ? `${historyRef.current?.scrollHeight}px`
+            : '0px',
+        }}
       >
         <div class="drawer-content-inner">
           <p class="drawer-content">hello</p>
@@ -100,7 +107,11 @@ export default function Profile() {
       <div
         ref={statsRef}
         class="drawer-content-wrapper"
-        style={{ maxHeight: isStatsOpen ? `${statsRef.current?.scrollHeight}px` : '0px' }}
+        style={{
+          maxHeight: isStatsOpen
+            ? `${statsRef.current?.scrollHeight}px`
+            : '0px',
+        }}
       >
         {/* Always render inner content so scrollHeight is valid */}
         <div class="drawer-content-inner">
@@ -125,10 +136,12 @@ export default function Profile() {
                   <div class="pillar-bar" style={{ height: `${heightPercent}%` }}>
                     <span class="pillar-value">{p.value}</span>
                   </div>
+                  <div class="pillar-separator"></div> {/* pink separator below the bar */}
                   <span class="pillar-label">{p.day}</span>
                 </div>
               );
             })}
+
           </div>
         </div>
       </div>
