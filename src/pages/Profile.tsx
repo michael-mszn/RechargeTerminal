@@ -37,7 +37,6 @@ export default function Profile() {
     return () => window.removeEventListener('resize', resizeName);
   }, []);
 
-  // Example pillar data
   const pillars = [
     { day: 'MO', value: 120 },
     { day: 'TU', value: 200 },
@@ -48,10 +47,10 @@ export default function Profile() {
     { day: 'SU', value: 300 },
   ];
 
-  // Determine the highest value rounded up to the next 50
+  // Compute max value for scaling (next 50)
   const maxValue = Math.ceil(Math.max(...pillars.map(p => p.value)) / 50) * 50;
 
-  // Compute 6 pink lines positions
+  // 6 pink horizontal lines
   const pinkLines = Array.from({ length: 6 }, (_, i) => ((i + 1) / 6) * maxValue);
 
   return (
@@ -83,7 +82,9 @@ export default function Profile() {
         class="drawer-content-wrapper"
         style={{ maxHeight: isHistoryOpen ? `${historyRef.current?.scrollHeight}px` : '0px' }}
       >
-        <p class="drawer-content">hello</p>
+        <div class="drawer-content-inner">
+          <p class="drawer-content">hello</p>
+        </div>
       </div>
 
       {/* Statistics drawer */}
@@ -96,16 +97,16 @@ export default function Profile() {
         </button>
         <span class="drawer-title">Statistics</span>
       </div>
-
       <div
         ref={statsRef}
         class="drawer-content-wrapper"
         style={{ maxHeight: isStatsOpen ? `${statsRef.current?.scrollHeight}px` : '0px' }}
       >
-        {/* Always rendered inner content */}
+        {/* Always render inner content so scrollHeight is valid */}
         <div class="drawer-content-inner">
           <p class="stats-title">MINUTES CHARGED PER DAY</p>
           <div class="pillar-chart">
+            {/* Pink horizontal lines */}
             {pinkLines.map((line, idx) => {
               const bottomPercent = (line / maxValue) * 100;
               return (
@@ -116,6 +117,7 @@ export default function Profile() {
                 ></div>
               );
             })}
+            {/* Pillars */}
             {pillars.map((p, idx) => {
               const heightPercent = (p.value / maxValue) * 100;
               return (

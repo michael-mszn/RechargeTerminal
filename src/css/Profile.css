@@ -124,7 +124,7 @@
     width: 85%;
     margin: 0 auto 2vh auto;
     position: relative;
-    min-height: 320px;
+    height: 320px; /* FIXED height ensures % heights inside work */
 }
 
 /* Pink horizontal lines */
@@ -144,21 +144,18 @@
     justify-content: flex-end;
     flex: 1;
     margin: 0 0.5vw;
-    position: relative;
+    height: 100%; /* now has a proper reference */
 }
 
 .pillar-bar {
     background-color: #a8e792;
     width: 40%;
-    border-radius: 6px 6px 6px 6px;
+    border-radius: 6px 6px 0 0;
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    position: relative;
-    transition: height 0.3s ease; /* smooth animation */
 }
 
-/* Numbers inside bars, rotated */
 .pillar-value {
     color: #124c21;
     font-weight: bold;
@@ -166,11 +163,12 @@
     transform: rotate(-90deg);
     white-space: nowrap;
     position: absolute;
+    bottom: 4px;
 }
 
-/* Day labels below bars */
 .pillar-label {
     font-size: 3.5vw;
     color: #000;
     margin-top: 0.5vh;
 }
+
