@@ -221,14 +221,14 @@
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
     border-right: 15px solid #a8e792; /* green */
-    margin-right: 2.5vw;
+    margin-right: 5vw;
 }
 
 .date-selector-arrow-right {
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
     border-left: 15px solid #a8e792; /* green */
-    margin-left: 2.5vw;
+    margin-left: 5vw;
 }
 
 /* pressed state turns pink temporarily */
@@ -238,6 +238,71 @@
 
 .date-selector-arrow.pressed-right {
     border-left-color: #ff3b92;
+}
+
+/* HISTORY TABLE */
+.history-table {
+    width: 85%;
+    margin: 2vh 0;
+    border-collapse: collapse;
+    text-align: center;
+    font-size: 4vw;
+}
+
+.history-table td {
+    padding: 1vh 1vw;
+    border-bottom: 1px solid #ccc;
+}
+
+.history-table th {
+    padding: 1vh 1vw;
+    border-bottom: 1px solid #ececec;
+}
+
+/* PAGINATION */
+.history-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2vw;
+    margin-top: 1vh;
+}
+
+.history-pagination-page {
+    font-size: 4vw;
+    padding: 0.5vh 1vw;
+    border: none;
+    background-color: #ececec;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.history-pagination-page.active {
+    background-color: #ff3b92;
+    color: #fff;
+}
+
+.history-pagination-arrow {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #a8e792;
+    font-size: 5vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.4s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.history-pagination-arrow.pressed {
+    color: #ff3b92;
+}
+
+/* Arrow spacing consistency (also for date selector) */
+.date-selector-arrow, .history-pagination-arrow {
+    margin: 0 1vw;
 }
 
 
