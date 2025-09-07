@@ -1,0 +1,100 @@
+.profile-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 1vh;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    color: #000;
+}
+
+/* Responsive dynamic name */
+.profile-name {
+    font-size: 10vw;       /* starting max size */
+    margin-bottom: 2vh;
+    text-align: center;
+    max-width: 85%;        /* 7.5% margin on both sides */
+}
+
+
+/* Balance */
+.profile-balance {
+    font-size: 7vw;
+    margin: 1vh 0;
+}
+
+/* Profile picture */
+.profile-picture {
+    width: 50vw;
+    max-width: 250px;
+    height: auto;
+    border-radius: 50%;
+    margin-bottom: 1vh;
+}
+
+/* Logout button */
+.profile-logout {
+    font-size: 7vw;
+    margin: 1vh 0;
+    cursor: pointer;
+    color: #a8e792;
+    transition: color 0.2s ease;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    background: none;
+    border: none;
+}
+
+.profile-logout.active,
+.profile-logout:hover {
+    color: #ff3b92;
+}
+
+/* Drawers */
+.profile-drawer {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 90%;
+    margin: 2vh 0;
+}
+
+.drawer-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 6vw; /* bigger button */
+    color: #a8e792;
+    transform: rotate(0deg);
+    transition: all 0.3s ease;
+    margin-right: 2vw;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.drawer-button.active {
+    color: #ff3b92;
+    transform: rotate(90deg); /* rotated to point down */
+}
+
+.drawer-title {
+    font-size: 6vw; /* bigger text */
+    font-weight: bold;
+}
+
+/* Drawer content container for animation */
+.drawer-content-wrapper {
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    width: 100%;
+}
+
+.drawer-content {
+    font-size: 5vw; /* bigger content */
+    padding-left: 6vw;
+    margin: 0.5vh 0;
+}
