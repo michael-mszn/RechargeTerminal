@@ -38,9 +38,9 @@ export default function Profile() {
   }, []);
 
   const pillars = [
-    { day: 'MO', value: 120 },
-    { day: 'TU', value: 200 },
-    { day: 'WE', value: 80 },
+    { day: 'MO', value: 175 },
+    { day: 'TU', value: 20 },
+    { day: 'WE', value: 0 },
     { day: 'TH', value: 150 },
     { day: 'FR', value: 180 },
     { day: 'SA', value: 50 },
@@ -137,12 +137,21 @@ export default function Profile() {
             {pillars.map((p, idx) => {
               const heightPercent =
                 (p.value / maxValue) * (100 - (baselineOffset / chartHeight) * 100);
+
+              const minHeightPercent = (25 / chartHeight) * 100;
+
+              // if bar is shorter than min → apply buffer
+              const isClamped = heightPercent < minHeightPercent;
+              const finalHeight = isClamped
+                ? minHeightPercent + 3 // add breathing room
+                : heightPercent;
+
               return (
                 <div class="pillar" key={idx}>
                   <div
                     class="pillar-bar"
                     style={{
-                      height: `calc(${heightPercent}% )`,
+                      height: `${finalHeight}%`,
                       bottom: `${baselineOffset}px`,
                       position: 'absolute',
                     }}
