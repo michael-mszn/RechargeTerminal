@@ -157,7 +157,7 @@
     justify-content: center;
     position: relative;
     z-index: 2; /* in front of chart lines */
-    padding-bottom: 4px;
+    padding-bottom: 0px;
 }
 
 .pillar-value {
@@ -171,21 +171,20 @@
     z-index: 3;          /* ensures it’s in front of everything */
 }
 
-
-.pillar-separator {
-    position: absolute;
-    bottom: -1.5em; /* just above day label */
+/* Single pink separator below pillars but above labels */
+.pillar-chart-separator {
+    position: absolute;       /* absolutely positioned inside .pillar-chart */
+    bottom: 6vw;            /* distance above labels */
     left: 0;
     width: 100%;
-    height: 4px; /* slightly thicker */
+    height: 4px;              /* thickness of separator */
     background-color: #ff3b92;
-    z-index: 4; /* above chart lines */
+    z-index: 2;               /* above pillars, below numbers */
 }
 
 .pillar-label {
     font-size: 3.5vw;
     color: #000;
-    margin-top: 0.5vh;
 }
 
 

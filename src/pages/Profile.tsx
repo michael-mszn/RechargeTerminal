@@ -47,12 +47,13 @@ export default function Profile() {
     { day: 'SU', value: 260 },
   ];
 
-  // Compute max value for scaling (next 50)
+  // Chart config
+  const chartHeight = 320;          // px height of chart container
+  const baselineOffset = 40;        // px reserved at bottom (≈6vw margin for separator + labels)
   const maxValue = Math.ceil(Math.max(...pillars.map(p => p.value)) / 50) * 50;
 
-  // 6 pink horizontal lines
-  const pinkLines = Array.from({ length: 6 }, (_, i) => ((i + 1) / 12) * maxValue * 2);
-
+  // Horizontal lines (6 evenly spaced including the baseline one)
+  const pinkLines = Array.from({ length: 6 }, (_, i) => ((i + 1) / 6) * maxValue);
 
   return (
     <div class="profile-container">
@@ -113,35 +114,45 @@ export default function Profile() {
             : '0px',
         }}
       >
-        {/* Always render inner content so scrollHeight is valid */}
         <div class="drawer-content-inner">
           <p class="stats-title">MINUTES CHARGED PER DAY</p>
-          <div class="pillar-chart">
-            {/* Pink horizontal lines */}
+          <div class="pillar-chart" style={{ height: `${chartHeight}px` }}>
+            {/* Thin pink lines */}
             {pinkLines.map((line, idx) => {
-              const bottomPercent = (line / maxValue) * 100;
+              const bottomPercent =
+                (line / maxValue) * (100 - (baselineOffset / chartHeight) * 100);
               return (
                 <div
                   key={idx}
                   class="pillar-chart-line"
-                  style={{ bottom: `${bottomPercent}%` }}
+                  style={{ bottom: `calc(${bottomPercent}% + ${baselineOffset}px)` }}
                 ></div>
               );
             })}
+
+            {/* Thick separator line */}
+            <div class="pillar-chart-separator"></div>
+
             {/* Pillars */}
             {pillars.map((p, idx) => {
-              const heightPercent = (p.value / maxValue) * 100;
+              const heightPercent =
+                (p.value / maxValue) * (100 - (baselineOffset / chartHeight) * 100);
               return (
                 <div class="pillar" key={idx}>
-                  <div class="pillar-bar" style={{ height: `${heightPercent}%` }}>
+                  <div
+                    class="pillar-bar"
+                    style={{
+                      height: `calc(${heightPercent}% )`,
+                      bottom: `${baselineOffset}px`,
+                      position: 'absolute',
+                    }}
+                  >
                     <span class="pillar-value">{p.value}</span>
                   </div>
-                  <div class="pillar-separator"></div> {/* pink separator below the bar */}
                   <span class="pillar-label">{p.day}</span>
                 </div>
               );
             })}
-
           </div>
         </div>
       </div>
