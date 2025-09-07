@@ -16,7 +16,7 @@ export default function Profile() {
   const toggleHistory = () => setHistoryOpen(prev => !prev);
   const toggleStats = () => setStatsOpen(prev => !prev);
 
-  // Dynamically resize name to fit screen width with 7.5% margin
+  // Dynamic font resizing for name
   useLayoutEffect(() => {
     const resizeName = () => {
       const el = nameRef.current;
@@ -26,7 +26,6 @@ export default function Profile() {
       let fontSize = 10; // starting size in vw
       el.style.fontSize = fontSize + 'vw';
 
-      // Reduce font size until it fits inside 85% of parent width
       while (el.scrollWidth > parentWidth * 0.85 && fontSize > 3) {
         fontSize -= 0.5;
         el.style.fontSize = fontSize + 'vw';
@@ -37,6 +36,23 @@ export default function Profile() {
     window.addEventListener('resize', resizeName);
     return () => window.removeEventListener('resize', resizeName);
   }, []);
+
+  // Example pillar data
+  const pillars = [
+    { day: 'MO', value: 120 },
+    { day: 'TU', value: 200 },
+    { day: 'WE', value: 80 },
+    { day: 'TH', value: 150 },
+    { day: 'FR', value: 180 },
+    { day: 'SA', value: 50 },
+    { day: 'SU', value: 300 },
+  ];
+
+  // Determine the highest value rounded up to the next 50
+  const maxValue = Math.ceil(Math.max(...pillars.map(p => p.value)) / 50) * 50;
+
+  // Compute 6 pink lines positions
+  const pinkLines = Array.from({ length: 6 }, (_, i) => ((i + 1) / 6) * maxValue);
 
   return (
     <div class="profile-container">
@@ -80,12 +96,39 @@ export default function Profile() {
         </button>
         <span class="drawer-title">Statistics</span>
       </div>
+
       <div
         ref={statsRef}
         class="drawer-content-wrapper"
         style={{ maxHeight: isStatsOpen ? `${statsRef.current?.scrollHeight}px` : '0px' }}
       >
-        <p class="drawer-content">hello</p>
+        {/* Always rendered inner content */}
+        <div class="drawer-content-inner">
+          <p class="stats-title">MINUTES CHARGED PER DAY</p>
+          <div class="pillar-chart">
+            {pinkLines.map((line, idx) => {
+              const bottomPercent = (line / maxValue) * 100;
+              return (
+                <div
+                  key={idx}
+                  class="pillar-chart-line"
+                  style={{ bottom: `${bottomPercent}%` }}
+                ></div>
+              );
+            })}
+            {pillars.map((p, idx) => {
+              const heightPercent = (p.value / maxValue) * 100;
+              return (
+                <div class="pillar" key={idx}>
+                  <div class="pillar-bar" style={{ height: `${heightPercent}%` }}>
+                    <span class="pillar-value">{p.value}</span>
+                  </div>
+                  <span class="pillar-label">{p.day}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
