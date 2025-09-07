@@ -3,17 +3,14 @@
     bottom: 0;
     left: 0;
     width: 100%;
-
     display: flex;
     justify-content: space-around;
     flex-direction: row-reverse;
     align-items: stretch;
-
     background-color: #fff;
     border-top: 1px solid #ddd;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
-
-    z-index: 1000;
+    z-index: 3000;
 }
 
 .nav-button {
@@ -22,49 +19,102 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
     text-align: center;
     text-decoration: none;
-
     font-family: Arial, sans-serif;
     font-weight: bold;
     font-size: 0.8rem;
-
     color: #444;
     transition: all 0.2s ease;
     padding: 8px 0;
+    user-select: none;
 }
 
-/* Active slot: pink background + white text */
 .nav-button.active {
     background-color: #ff3b92;
-    color: #fff !important; /* enforce white text */
+    color: #fff !important;
 }
 
-/* Default hover/focus: pink text (only when not active) */
-.nav-button:hover:not(.active),
-.nav-button:focus:not(.active) {
-    color: #ff3b92;
+.nav-button.held {
+    background-color: #ff3b92 !important;
+    color: #fff !important;
 }
 
-/* Icon styling */
+.nav-button.held .nav-icon {
+    filter: brightness(0) invert(1);
+}
+
 .nav-icon {
     width: 24px;
     height: 24px;
     margin-bottom: 2px;
     object-fit: contain;
-
-    filter: grayscale(100%) brightness(0) invert(0); /* default black */
+    filter: grayscale(100%) brightness(0) invert(0);
     transition: filter 0.2s ease;
 }
 
-/* Hover: icon turns pink (only when not active) */
-.nav-button:hover:not(.active) .nav-icon,
-.nav-button:focus:not(.active) .nav-icon {
+.nav-button:hover:not(.active) .nav-icon {
     filter: invert(48%) sepia(99%) saturate(3300%) hue-rotate(310deg) brightness(95%) contrast(105%);
 }
 
-/* Active: white icon */
 .nav-button.active .nav-icon {
     filter: brightness(0) invert(1);
+}
+
+.page-dim {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+}
+
+.ellioth-overlay-text,
+.ellioth-bars {
+    position: fixed;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.ellioth-overlay-text {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ff3b92;
+    font-size: clamp(3rem, 8vw, 8rem);
+    font-weight: bold;
+    text-align: center;
+    line-height: 1.2em;
+    max-width: 90%;
+    white-space: pre-line;
+    margin-bottom: 5vh;
+}
+
+.ellioth-bars {
+    bottom: 60px;
+    left: 0;
+    width: 100%;
+    height: 20vh;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+}
+
+.ellioth-bar {
+    width: 20px;
+    background-color: #ff3b92;
+    border-radius: 5px;
+    transform-origin: bottom;
+}
+
+/* simple scaleY animation */
+@keyframes bounce-js {
+    0%, 100% { transform: scaleY(0.2); }
+    50% { transform: scaleY(1); }
+}
+
+body.no-scroll {
+    overflow: hidden;
 }
