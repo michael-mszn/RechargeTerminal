@@ -47,19 +47,49 @@ export default function Profile() {
     { day: 'SU', value: 260 },
   ];
 
-  // Chart config
-  const chartHeight = 320;          // px height of chart container
-  const baselineOffset = 40;        // px reserved at bottom (≈6vw margin for separator + labels)
+  const chartHeight = 320;
+  const baselineOffset = 40;
   const maxValue = Math.ceil(Math.max(...pillars.map(p => p.value)) / 50) * 50;
-
-  // Horizontal lines (6 evenly spaced including the baseline one)
   const pinkLines = Array.from({ length: 6 }, (_, i) => ((i + 1) / 6) * maxValue);
+
+  // Date selector state
+  const [currentWeekStart, setCurrentWeekStart] = useState(getMonday(new Date()));
+  const [leftPressed, setLeftPressed] = useState(false);
+  const [rightPressed, setRightPressed] = useState(false);
+
+  function getMonday(d: Date) {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    date.setDate(date.getDate() + diff);
+    date.setHours(0,0,0,0);
+    return date;
+  }
+
+  function formatWeek(start: Date) {
+    const end = new Date(start);
+    end.setDate(end.getDate() + 6);
+    const pad = (n: number) => (n < 10 ? '0' + n : n);
+    return `${pad(start.getMonth() + 1)}/${pad(start.getDate())}/${start.getFullYear()} - ${pad(end.getMonth() + 1)}/${pad(end.getDate())}/${end.getFullYear()}`;
+  }
+
+  const changeWeek = (delta: number, direction: 'left' | 'right') => {
+    const newStart = new Date(currentWeekStart);
+    newStart.setDate(newStart.getDate() + delta * 7);
+    setCurrentWeekStart(newStart);
+
+    if (direction === 'left') {
+      setLeftPressed(true);
+      setTimeout(() => setLeftPressed(false), 200);
+    } else {
+      setRightPressed(true);
+      setTimeout(() => setRightPressed(false), 200);
+    }
+  };
 
   return (
     <div class="profile-container">
-      <p ref={nameRef} class="profile-name">
-        Max Tim Mustermann
-      </p>
+      <p ref={nameRef} class="profile-name">Max Tim Mustermann</p>
       <img src={profilePic} alt="Profile" class="profile-picture" />
       <p class="profile-balance">Balance: 183.86€</p>
 
@@ -85,9 +115,7 @@ export default function Profile() {
         ref={historyRef}
         class="drawer-content-wrapper"
         style={{
-          maxHeight: isHistoryOpen
-            ? `${historyRef.current?.scrollHeight}px`
-            : '0px',
+          maxHeight: isHistoryOpen ? `${historyRef.current?.scrollHeight}px` : '0px',
         }}
       >
         <div class="drawer-content-inner">
@@ -109,15 +137,30 @@ export default function Profile() {
         ref={statsRef}
         class="drawer-content-wrapper"
         style={{
-          maxHeight: isStatsOpen
-            ? `${statsRef.current?.scrollHeight}px`
-            : '0px',
+          maxHeight: isStatsOpen ? `${statsRef.current?.scrollHeight}px` : '0px',
         }}
       >
         <div class="drawer-content-inner">
           <p class="stats-title">MINUTES CHARGED PER DAY</p>
+
+          {/* DATE SELECTOR */}
+          <div class="date-selector">
+            <button
+              class={`date-selector-arrow date-selector-arrow-left ${leftPressed ? 'pressed-left' : ''}`}
+              onClick={() => changeWeek(-1, 'left')}
+            ></button>
+
+            <div class="date-selector-bar">{formatWeek(currentWeekStart)}</div>
+
+            <button
+              class={`date-selector-arrow date-selector-arrow-right ${rightPressed ? 'pressed-right' : ''}`}
+              onClick={() => changeWeek(1, 'right')}
+            ></button>
+          </div>
+
+
+          {/* Pillar chart */}
           <div class="pillar-chart" style={{ height: `${chartHeight}px` }}>
-            {/* Thin pink lines */}
             {pinkLines.map((line, idx) => {
               const bottomPercent =
                 (line / maxValue) * (100 - (baselineOffset / chartHeight) * 100);
@@ -130,21 +173,14 @@ export default function Profile() {
               );
             })}
 
-            {/* Thick separator line */}
             <div class="pillar-chart-separator"></div>
 
-            {/* Pillars */}
             {pillars.map((p, idx) => {
               const heightPercent =
                 (p.value / maxValue) * (100 - (baselineOffset / chartHeight) * 100);
-
               const minHeightPercent = (25 / chartHeight) * 100;
-
-              // if bar is shorter than min → apply buffer
               const isClamped = heightPercent < minHeightPercent;
-              const finalHeight = isClamped
-                ? minHeightPercent + 3 // add breathing room
-                : heightPercent;
+              const finalHeight = isClamped ? minHeightPercent + 3 : heightPercent;
 
               return (
                 <div class="pillar" key={idx}>
