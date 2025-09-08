@@ -130,3 +130,15 @@
     display: inline-block;
     width: 0.5ch;
 }
+
+/* Spinning H animation: smooth fast -> slow */
+.spin-hour {
+    display: inline-block;
+    transform-origin: center;
+    animation: spinH 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes spinH {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(720deg); }
+}

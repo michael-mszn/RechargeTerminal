@@ -49,7 +49,8 @@ export default function Charging() {
           <>
             00
             <span className="blink-colon">{showColon ? ':' : ' '}</span>
-            00 H
+            00&nbsp;
+            <span className="spin-hour">H</span>
           </>
         )}
       </div>
