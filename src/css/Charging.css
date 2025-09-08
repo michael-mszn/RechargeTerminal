@@ -8,7 +8,6 @@
     padding-bottom: 8vh; /* ensures content stays above navbar */
 }
 
-
 .greeting {
     font-family: Arial, sans-serif;
     font-size: clamp(1.5rem, 4vw, 2.5rem);
@@ -57,7 +56,7 @@
     pointer-events: none;
 }
 
-/* Optional charge timer */
+/* Optional charge timer / active state */
 .optional-timer {
     font-family: Arial, sans-serif;
     font-weight: bold;
@@ -66,16 +65,26 @@
     margin-top: 1.5rem;
 }
 
-/* Timer pink box */
+/* Timer box */
 .timer-box {
-    background-color: #ececec;
+    background-color: #ececec; /* default grey */
     border-radius: 12px;
     padding: 0.5rem 1rem;
-    margin: 0.5rem 0; /* small margin top and bottom */
+    margin: 0.5rem 0;
     font-family: Arial, sans-serif;
     font-weight: bold;
     font-size: clamp(1.5rem, 4vw, 2rem);
     color: #ff3b92;
+    min-height: 2.5rem; /* reserve space */
+    min-width: 10rem;   /* match buttons */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Active timer: just make background white */
+.timer-box.active-timer {
+    background-color: white;
 }
 
 /* Stop charging text */
@@ -89,16 +98,35 @@
     margin-top: 0.5rem;
 }
 
-/* Apply button */
-.apply-button {
+/* Apply / Cancel button */
+.apply-button,
+.cancel-button {
     margin-top: 1.5rem;
-    background-color: #a8e792;
-    border: none;
-    border-radius: 9999px; /* fully round */
-    padding: 0.75rem 3rem;
+    border-radius: 9999px;
     font-family: Arial, sans-serif;
     font-weight: bold;
     font-size: clamp(1rem, 2.5vw, 1.3rem);
-    color: #000;
+    padding: 0.75rem 3rem;
+    min-width: 10rem;  /* same width for both buttons */
+    min-height: 3rem;  /* same height */
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.apply-button {
+    background-color: #a8e792;
+    color: #000;
+    border: none;
+}
+
+.cancel-button {
+    background-color: #ff3b92;
+    color: #fff;
+    border: none;
+}
+
+/* Blinking colon */
+.blink-colon {
+    display: inline-block;
+    width: 0.5ch;
 }
