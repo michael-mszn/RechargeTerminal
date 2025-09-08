@@ -105,8 +105,9 @@ const App = () => {
           {/* Animated bars */}
           <div class="ellioth-bars">
             {Array.from({ length: 8 }).map((_, i) => {
-              const maxScale = (0.5 + Math.random() * 1.5).toFixed(2); // between 0.5 and 2x
-              const duration = 0.4 + Math.random() * 0.6; // 0.4–1s
+              const minScale = 0.2 + Math.random() * 0.1; // slightly different rest sizes
+              const maxScale = 0.6 + Math.random() * 0.3; // reduced max size (~30% less)
+              const duration = 0.4 + Math.random() * 0.3;
               const delay = Math.random() * 0.5;
 
               return (
@@ -114,12 +115,12 @@ const App = () => {
                   key={i}
                   class="ellioth-bar"
                   style={{
+                    ['--min-scale' as any]: `${minScale}`,
                     ['--max-scale' as any]: `${maxScale}`,
                     animationDuration: `${duration}s`,
                     animationDelay: `${delay}s`,
                   }}
-
-                />
+                ></div>
               );
             })}
           </div>
