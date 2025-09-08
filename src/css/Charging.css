@@ -2,7 +2,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem;
     text-align: center;
     width: 100%;
     box-sizing: border-box;
@@ -13,16 +12,17 @@
     font-size: clamp(1.5rem, 4vw, 2.5rem);
     font-weight: bold;
     color: #000;
-    margin-bottom: 1.5rem;
+    margin: 2rem 7.5%; /* vertical margin 2rem, horizontal margin 7.5% */
 }
 
 .charging-status {
     font-family: Arial, sans-serif;
+    font-weight: bold;
     font-size: clamp(1rem, 3vw, 1.5rem);
     color: #a8e792;
-    margin-bottom: 1.5rem;
+    margin: 2rem 7.5%; /* horizontal margins enforced */
     line-height: 1.2em;
-    max-height: calc(1.2em * 3); /* ensures max 3 lines */
+    max-height: calc(1.2em * 3); /* max 3 lines */
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -34,6 +34,7 @@
     position: relative;
     width: 80%;
     max-width: 400px;
+    margin: 2rem 7.5%; /* horizontal margins */
 }
 
 .car-image {
@@ -44,7 +45,7 @@
 
 .current-overlay {
     position: absolute;
-    top: 50%;
+    top: 58%; /* slightly down */
     left: 50%;
     transform: translate(-50%, -50%);
     font-family: Arial, sans-serif;
