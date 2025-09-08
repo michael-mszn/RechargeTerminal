@@ -79,7 +79,7 @@ export default function Charging() {
         {digits[0]}{digits[1]}
         <span className="blink-colon">{showColon ? ':' : ' '}</span>
         {digits[2]}{digits[3]}&nbsp;
-        <span className="spin-hour">H</span>
+        <span className={timerActive ? 'spin-hour' : ''}>H</span>
       </>
     );
   };
