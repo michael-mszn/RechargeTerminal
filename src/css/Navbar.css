@@ -53,10 +53,6 @@
     transition: filter 0.2s ease;
 }
 
-.nav-button:hover:not(.active) .nav-icon {
-    filter: invert(48%) sepia(99%) saturate(3300%) hue-rotate(310deg) brightness(95%) contrast(105%);
-}
-
 .nav-button.active .nav-icon {
     filter: brightness(0) invert(1);
 }
