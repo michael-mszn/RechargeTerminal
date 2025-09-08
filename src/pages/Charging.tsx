@@ -25,16 +25,31 @@ export default function Charging() {
 
   // Handle input typing
   const handleInputChange = (e: any) => {
+    if (timerActive) return; // prevent input while charging
+
     const value = (e.target as HTMLInputElement).value.replace(/\D/g, ''); // only digits
     if (!value) return;
 
     setTimerInput(prev => {
       const newArr = [...prev];
       let index = currentDigit !== null ? currentDigit : 0;
-      value.split('').forEach((d) => {
+
+      value.split('').forEach((d: string) => {
         newArr[index] = d;
         index = (index + 1) % 4;
       });
+
+      // Clamp hours and minutes
+      const hours = parseInt(newArr[0] + newArr[1], 10);
+      const minutes = parseInt(newArr[2] + newArr[3], 10);
+      const clampedHours = Math.min(Math.max(hours, 0), 23).toString().padStart(2, '0');
+      const clampedMinutes = Math.min(Math.max(minutes, 0), 59).toString().padStart(2, '0');
+
+      newArr[0] = clampedHours[0];
+      newArr[1] = clampedHours[1];
+      newArr[2] = clampedMinutes[0];
+      newArr[3] = clampedMinutes[1];
+
       setCurrentDigit(index % 4); // highlight the next digit
       return newArr;
     });
@@ -44,8 +59,8 @@ export default function Charging() {
 
   // Focus input when timer-box tapped
   const handleTimerBoxClick = () => {
-    inputRef.current?.focus();
-    if (currentDigit === null) setCurrentDigit(0); // start highlighting first digit
+    if (!timerActive) inputRef.current?.focus();
+    if (!timerActive && currentDigit === null) setCurrentDigit(0); // start highlighting first digit
   };
 
   // Render timer digits with colon and blue highlight
@@ -59,7 +74,6 @@ export default function Charging() {
       </span>
     ));
 
-    // Insert colon between 2nd and 3rd digits
     return (
       <>
         {digits[0]}{digits[1]}
@@ -102,7 +116,9 @@ export default function Charging() {
         type="number"
         inputMode="numeric"
         ref={inputRef}
-        onFocus={() => currentDigit === null && setCurrentDigit(0)}
+        onFocus={() => {
+          if (!timerActive && currentDigit === null) setCurrentDigit(0);
+        }}
         onBlur={() => setCurrentDigit(null)}
         onInput={handleInputChange}
         value=""
