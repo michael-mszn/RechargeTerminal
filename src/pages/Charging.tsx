@@ -15,6 +15,20 @@ export default function Charging() {
         <img src={carImage} alt="Car charging" className="car-image" />
         <span className="current-overlay">30A</span>
       </div>
+
+      <div className="optional-timer">Set optional charge timer</div>
+
+      <div className="timer-box">00:00 H</div>
+
+      <div className="stop-charging">
+        Your car will stop charging
+        <br />
+        after your configured
+        <br />
+        time elapsed.
+      </div>
+
+      <button className="apply-button">Apply</button>
     </div>
   );
 }
