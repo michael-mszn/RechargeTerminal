@@ -28,6 +28,7 @@
     transition: all 0.2s ease;
     padding: 8px 0;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .nav-button.active {

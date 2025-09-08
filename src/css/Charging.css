@@ -142,3 +142,54 @@
     from { transform: rotate(0deg); }
     to { transform: rotate(720deg); }
 }
+
+/* Floating input overlay */
+.floating-timer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7); /* dim background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2500; /* below navbar if navbar z-index is 3000 */
+    pointer-events: all;
+}
+
+.floating-timer-container {
+    background: #000; /* black background for the input area */
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80%;
+    max-width: 400px;
+}
+
+.floating-timer-container .optional-timer {
+    color: #a8e792;
+    margin-bottom: 1rem;
+}
+
+.floating-timer-container .timer-box {
+    margin-bottom: 1rem;
+}
+
+.floating-timer-container .close-overlay {
+    margin-top: 1rem;
+    background: #ff3b92;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    font-size: clamp(1rem,2.5vw,1.3rem);
+    border-radius: 9999px;
+    padding: 0.5rem 2rem;
+    cursor: pointer;
+    border: none;
+}
+
