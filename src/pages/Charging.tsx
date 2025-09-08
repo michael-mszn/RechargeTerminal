@@ -6,9 +6,9 @@ import carImage from '../images/car-home-menu.png';
 export default function Charging() {
   const [timerActive, setTimerActive] = useState(false);
   const [showColon, setShowColon] = useState(true);
-  const [floatingInputActive, setFloatingInputActive] = useState(false);
   const [timerInput, setTimerInput] = useState(['0','0','0','0']); // 4-digit time
   const [currentDigit, setCurrentDigit] = useState<number | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Blink colon every second when timer is active
@@ -22,12 +22,14 @@ export default function Charging() {
   const handleApplyCancel = () => {
     setTimerActive(prev => !prev);
     setCurrentDigit(null); // reset highlight
+    setShowOverlay(false); // close overlay if open
   };
 
   // Handle input typing
   const handleInputChange = (e: any) => {
     if (timerActive) return; // prevent input while charging
-    const value = (e.target as HTMLInputElement).value.replace(/\D/g,'');
+
+    const value = (e.target as HTMLInputElement).value.replace(/\D/g, ''); // only digits
     if (!value) return;
 
     setTimerInput(prev => {
@@ -50,29 +52,31 @@ export default function Charging() {
       newArr[2] = clampedMinutes[0];
       newArr[3] = clampedMinutes[1];
 
-      setCurrentDigit(index % 4); // highlight next digit
+      setCurrentDigit(index % 4); // highlight the next digit
       return newArr;
     });
 
     (e.target as HTMLInputElement).value = ''; // clear input
   };
 
-  // Show floating input
+  // Focus input when timer-box tapped
   const handleTimerBoxClick = () => {
-    if (!timerActive) setFloatingInputActive(true);
-    inputRef.current?.focus();
-    if (!timerActive && currentDigit === null) setCurrentDigit(0);
-  };
-
-  const closeFloatingInput = () => {
-    setFloatingInputActive(false);
-    setCurrentDigit(null);
+    if (!timerActive) {
+      setShowOverlay(true);
+      setCurrentDigit(0);
+      inputRef.current?.focus();
+    }
   };
 
   // Render timer digits with colon and blue highlight
   const renderTimerDigits = () => {
     const digits = timerInput.map((d, i) => (
-      <span key={i} style={{ color: currentDigit === i ? '#66a9f4' : '#ff3b92' }}>{d}</span>
+      <span
+        key={i}
+        style={{ color: currentDigit === i && !timerActive ? '#66a9f4' : '#ff3b92' }}
+      >
+        {d}
+      </span>
     ));
 
     return (
@@ -98,50 +102,55 @@ export default function Charging() {
         <span className="current-overlay">30A</span>
       </div>
 
-      {/* Original timer box */}
-      {!timerActive && !floatingInputActive && (
-        <div className="optional-timer" onClick={handleTimerBoxClick}>
-          Set optional charge timer
-        </div>
-      )}
-      {!timerActive && !floatingInputActive && (
-        <div className="timer-box" onClick={handleTimerBoxClick}>
-          {renderTimerDigits()}
-        </div>
+      {!timerActive ? (
+        <div className="optional-timer">Set optional charge timer</div>
+      ) : (
+        <div className="optional-timer">Charging ends in</div>
       )}
 
-      {/* Floating input overlay */}
-      {floatingInputActive && (
+      {/* Timer box (always visible) */}
+      <div
+        className="timer-box"
+        onClick={handleTimerBoxClick}
+      >
+        {renderTimerDigits()}
+      </div>
+
+      {/* Hidden input for numpad */}
+      <input
+        type="number"
+        inputMode="numeric"
+        ref={inputRef}
+        onInput={handleInputChange}
+        value=""
+        style={{
+          position: 'absolute',
+          opacity: 0,
+          width: '1px',
+          height: '1px',
+          border: 'none',
+          padding: 0,
+          margin: 0,
+        }}
+      />
+
+      {/* Floating overlay for input */}
+      {showOverlay && (
         <div className="floating-timer-overlay">
           <div className="floating-timer-container">
+            <button className="close-overlay" onClick={() => setShowOverlay(false)}>×</button>
             <div className="optional-timer">Set optional charge timer</div>
-            <div className="timer-box">
-              {renderTimerDigits()}
-            </div>
-            <button className="close-overlay" onClick={closeFloatingInput}>Done</button>
+            <div className="timer-box">{renderTimerDigits()}</div>
           </div>
-          {/* Hidden input for numpad */}
-          <input
-            type="number"
-            inputMode="numeric"
-            autoFocus
-            ref={inputRef}
-            onInput={handleInputChange}
-            style={{
-              position: 'absolute',
-              opacity: 0,
-              width: '1px',
-              height: '1px',
-              border: 'none',
-              padding: 0,
-              margin: 0
-            }}
-          />
         </div>
       )}
 
       <div className="stop-charging">
-        Your car will stop charging<br/>after your configured<br/>time elapsed.
+        Your car will stop charging
+        <br />
+        after your configured
+        <br />
+        time elapsed.
       </div>
 
       <button
