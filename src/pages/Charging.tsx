@@ -12,11 +12,17 @@ export default function Charging() {
   const [overlayMarginTop, setOverlayMarginTop] = useState('15vh');
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Blink colon only when timer is active
   useEffect(() => {
-    if (!timerActive) return;
-    const interval = setInterval(() => setShowColon(prev => !prev), 1000);
-    return () => clearInterval(interval);
+    if (timerActive) {
+      const interval = setInterval(() => setShowColon(prev => !prev), 1000);
+      return () => clearInterval(interval);
+    } else {
+      // Reset colon to visible when not active
+      setShowColon(true);
+    }
   }, [timerActive]);
+
 
   useEffect(() => {
     if (showOverlay) {
