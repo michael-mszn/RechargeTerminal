@@ -9,6 +9,7 @@ export default function Profile() {
   const [isStatsOpen, setStatsOpen] = useState(false);
   const [isLogoutActive, setLogoutActive] = useState(false);
   const [fullName, setFullName] = useState('Max Dummy Mustername');
+  const [weeklyStats, setWeeklyStats] = useState<{ [key: string]: number }>({});
 
   const historyRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
@@ -35,26 +36,30 @@ export default function Profile() {
     return () => window.removeEventListener('resize', resizeName);
   }, []);
 
-  const pillars = [
-    { day: 'MO', value: 175 },
-    { day: 'TU', value: 20 },
-    { day: 'WE', value: 0 },
-    { day: 'TH', value: 150 },
-    { day: 'FR', value: 180 },
-    { day: 'SA', value: 50 },
-    { day: 'SU', value: 260 },
-  ];
-
-  const chartHeight = 320;
-  const baselineOffset = 40;
-  const maxValue = Math.ceil(Math.max(...pillars.map(p => p.value)) / 50) * 50;
-  const pinkLines = Array.from({ length: 6 }, (_, i) => ((i + 1) / 6) * maxValue);
-
   // Date selector state
   const [currentWeekStart, setCurrentWeekStart] = useState(getMonday(new Date()));
   const [leftPressed, setLeftPressed] = useState(false);
   const [rightPressed, setRightPressed] = useState(false);
   const [balance, setBalance] = useState('0.00');
+
+  const days = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'];
+  const pillars = days.map((day, idx) => {
+    const date = new Date(currentWeekStart);
+    date.setDate(currentWeekStart.getDate() + idx);
+    const key = `${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getDate().toString().padStart(2,'0')}/${date.getFullYear()}`;
+    return { day, value: weeklyStats[key] ?? 0 };
+  });
+
+
+  const chartHeight = 320;
+  const baselineOffset = 40;
+  let computedMax = Math.max(...pillars.map(p => p.value));
+  if (computedMax === 0) computedMax = 50; // fallback for all-zero week
+
+  const maxValue = Math.ceil(computedMax / 50) * 50;
+
+  const minHeightPercent = (25 / chartHeight) * 100;
+  const pinkLines = Array.from({ length: 6 }, (_, i) => ((i + 1) / 6) * maxValue);
 
   function getMonday(d: Date) {
     const date = new Date(d);
@@ -179,6 +184,29 @@ export default function Profile() {
     fetchFullName();
   }, []);
 
+  // fetch weekly stats when week changes
+  useEffect(() => {
+    const fetchWeeklyStats = async () => {
+      const startDate = currentWeekStart;
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+
+      const startStr = `${startDate.getFullYear()}-${(startDate.getMonth()+1).toString().padStart(2,'0')}-${startDate.getDate().toString().padStart(2,'0')}`;
+      const endStr   = `${endDate.getFullYear()}-${(endDate.getMonth()+1).toString().padStart(2,'0')}-${endDate.getDate().toString().padStart(2,'0')}`;
+
+      try {
+        const res = await fetch(`/api/get-weekly-stats.php?start=${startStr}&end=${endStr}`, { credentials: 'same-origin' });
+        const data = await res.json();
+        if (data.stats) {
+          setWeeklyStats(data.stats);
+        }
+      } catch (err) {
+        console.error('Failed to fetch weekly stats', err);
+      }
+    };
+
+    fetchWeeklyStats();
+  }, [currentWeekStart]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -232,6 +260,7 @@ export default function Profile() {
     return pages;
   };
   const pagesToShow = getPagesToShow();
+
 
   return (
     <div class="profile-container">
@@ -385,14 +414,8 @@ export default function Profile() {
             <div class="pillar-chart-separator"></div>
 
             {pillars.map((p, idx) => {
-              const heightPercent =
-                (p.value / maxValue) *
-                (100 - (baselineOffset / chartHeight) * 100);
-              const minHeightPercent = (25 / chartHeight) * 100;
-              const isClamped = heightPercent < minHeightPercent;
-              const finalHeight = isClamped
-                ? minHeightPercent + 3
-                : heightPercent;
+              const heightPercent = (p.value / maxValue) * (100 - (baselineOffset / chartHeight) * 100);
+              const finalHeight = heightPercent < minHeightPercent ? minHeightPercent : heightPercent;
 
               return (
                 <div class="pillar" key={idx}>
