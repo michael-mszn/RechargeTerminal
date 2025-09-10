@@ -189,7 +189,7 @@ export default function Home() {
       <div className="aspect-box">
         <div className="center-vertical">
           <div className="headline">
-            <p className="bold">Parkplatzbelegung</p>
+            <p className="bold">Parking Slots</p>
           </div>
         </div>
         <div className="center-vertical">
@@ -221,7 +221,7 @@ export default function Home() {
           <div
             className={`qrcode-container time-element ${username ? 'qr-moved' : 'qr'}`}
           >
-            {!username && <p className="time-element">Scan this QR code:</p>}
+            {!username && <p className="time-element">Scan this QR code to access recharging:</p>}
             <canvas ref={canvasRef}></canvas>
           </div>
 

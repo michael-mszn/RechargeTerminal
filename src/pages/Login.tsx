@@ -23,19 +23,33 @@ export default function Login() {
         credentials: 'same-origin',
       });
 
-      const data = await res.json();
+      const text = await res.text(); // read raw response
+
+      // Extract last JSON object
+      const jsonStrings = text.match(/\{[^{}]*\}$/); // match last {...}
+      if (!jsonStrings) {
+        addNotification('Invalid server response');
+        setLoading(false);
+        return;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(jsonStrings[0]);
+      } catch (err) {
+        console.error('Failed to parse JSON:', err, 'from:', jsonStrings[0]);
+        addNotification('Login failed');
+        setLoading(false);
+        return;
+      }
 
       if (!res.ok) {
-        // Show server-side error
         addNotification(data.error || 'Login failed');
       } else {
-        // Success: session cookie now set
-        addNotification(`Welcome ${data.fullName}`);
-
-        // Redirect after a small delay so notification is visible
+        // Redirect after a short delay so notification is visible
         setTimeout(() => {
           window.location.href = '/charging';
-        }, 200); // 0.2s is enough
+        }, 200);
       }
     } catch (err) {
       console.error(err);
@@ -47,6 +61,7 @@ export default function Login() {
 
   return (
     <div class="login-page">
+      <p class="welcome-text">Ellioth Terminal Login</p>
       <form class="login-form" onSubmit={handleSubmit}>
         <input
           type="text"
