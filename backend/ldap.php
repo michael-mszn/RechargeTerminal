@@ -1,96 +1,80 @@
 <?php
-
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-if(!isset($_POST['password']) || !isset($_POST['username'])) {
-    echo <<<FORM
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LDAP Login</title>
-</head>
-<body>
-    <form method="POST" action="">
-        <label for="password">Passwort:</label>
-        <input type="text" id="username" name="username" required><br>
-        <input type="password" id="password" name="password" required><br>
-        <input type="submit" value="Anmelden">
-    </form>
-</body>
-</html>
-FORM;
+// Only accept POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed']);
     exit;
 }
 
-// Access Data
+header('Content-Type: application/json');
+
+// Validate input
+if (!isset($_POST['username']) || !isset($_POST['password'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing username or password']);
+    exit;
+}
+
 $ldap_host = 'ldaps://adldap.hs-regensburg.de';
 $ldap_dn   = 'DC=hs-regensburg,DC=de';
 $ldap_user = $_POST['username'];
 $ldap_pass = $_POST['password'];
 $samAccountName = explode('@', $ldap_user)[0];
 
-// Build connection
+// Connect LDAP
 $ldap_conn = ldap_connect($ldap_host);
 if (!$ldap_conn) {
-    die("Verbindung zum LDAP-Server fehlgeschlagen.");
+    http_response_code(500);
+    echo json_encode(['error' => 'LDAP server connection failed']);
+    exit;
 }
 
-// Set LDAP Options
 ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
 ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
 
-// Bind with User
+// Bind user
 if (!@ldap_bind($ldap_conn, $ldap_user, $ldap_pass)) {
-    die("Bind fehlgeschlagen: " . ldap_error($ldap_conn));
+    http_response_code(401);
+    echo json_encode(['error' => 'Invalid credentials']);
+    exit;
 }
 
-// Filter and Attributes
+// Search LDAP
 $filter = "(samAccountName=$samAccountName)";
 $attributes = ['givenName', 'sn', 'mail'];
-
-// Search
-$search = ldap_search($ldap_conn, $ldap_dn, $filter, $attributes, 0, 0);
+$search = ldap_search($ldap_conn, $ldap_dn, $filter, $attributes);
 if (!$search) {
-    die("Suche fehlgeschlagen: " . ldap_error($ldap_conn));
+    http_response_code(500);
+    echo json_encode(['error' => 'LDAP search failed']);
+    exit;
 }
 
-// Get Results
 $entries = ldap_get_entries($ldap_conn, $search);
-
-// Close Connection
 ldap_unbind($ldap_conn);
-
-
-
-
 
 session_start();
 
-// Store user info in session
+// Store user info
 $_SESSION['username'] = $ldap_user;
-
-// Force user to re-select parking position
 unset($_SESSION['parking_position']);
 
-// Extract first entry
 if ($entries['count'] < 1) {
-    die("Kein Benutzer gefunden.");
+    http_response_code(404);
+    echo json_encode(['error' => 'User not found']);
+    exit;
 }
 
-// Build displayable info
 $givenName = $entries[0]['givenname'][0] ?? '';
-$sn        = $entries[0]['sn'][0]        ?? '';
-$email     = $entries[0]['mail'][0]      ?? '';
+$sn        = $entries[0]['sn'][0] ?? '';
+$email     = $entries[0]['mail'][0] ?? '';
 $fullName  = trim("$givenName $sn");
-if ($fullName === '') {
-    $fullName = $samAccountName;
-}
+if ($fullName === '') $fullName = $samAccountName;
 
-
+// SQLite DB operations
 $db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -99,20 +83,19 @@ $stmt = $db->prepare("SELECT value FROM key_value WHERE key = 'current_qr_code'"
 $stmt->execute();
 $currentToken = $stmt->fetchColumn();
 
-// a) Save username as "current_user" in key_value
+// Save current user & last activity
 $stmt = $db->prepare("INSERT OR REPLACE INTO key_value (key, value, updated_at) VALUES ('current_user', ?, CURRENT_TIMESTAMP)");
 $stmt->execute([$ldap_user]);
 
-// b) Save login as "last_activity" in key_value
 $stmt = $db->prepare("INSERT OR REPLACE INTO key_value (key, value, updated_at) VALUES ('last_activity', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
 $stmt->execute();
 
-// c) Force refresh the token so two users don't accidentally get the same token
+// Force refresh token
 require_once __DIR__ . '/generate-token.php';
 $newToken = generateNewToken(true);
 $newToken = generateNewToken(true);
 
-// d) Insert or update user
+// Insert or update user
 $stmt = $db->prepare("
     INSERT INTO users (username, name, surname, email, last_login, remember_token)
     VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, ?)
@@ -125,7 +108,7 @@ $stmt = $db->prepare("
 ");
 $stmt->execute([$ldap_user, $givenName, $sn, $email, $currentToken]);
 
-// e) Set cookie for 14 days
+// Set cookie for 14 days
 setcookie('current_qr_code', $currentToken, [
     'expires' => time() + (14 * 24 * 60 * 60),
     'path' => '/',
@@ -134,7 +117,11 @@ setcookie('current_qr_code', $currentToken, [
     'samesite' => 'Lax'
 ]);
 
-// f) Redirect to success page
-header("Location: /success.html");
+// Return success
+echo json_encode([
+    'username' => $ldap_user,
+    'fullName' => $fullName,
+    'email'    => $email,
+    'token'    => $currentToken
+]);
 exit;
-?>

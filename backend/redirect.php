@@ -15,7 +15,7 @@ try {
     if (defined('BLOCK_REMOTE_ACCESS') && BLOCK_REMOTE_ACCESS === 1) {
         if (!$cookieToken) {
             http_response_code(403);
-            echo "<h1>Zugriff verweigert</h1><p>Bitte scannen Sie den QR-Code am Terminal.</p>";
+            echo "<h1>Access Denied</h1><p>Please scan the QR code at the terminal.</p>";
             exit;
         }
 
@@ -28,7 +28,7 @@ try {
 
         if (!in_array($cookieToken, $validTokens, true)) {
             http_response_code(403);
-            echo "<h1>Zugriff verweigert</h1><p>Bitte scannen Sie den QR-Code am Terminal.</p>";
+            echo "<h1>Access Denied</h1><p>Please scan the QR code at the terminal.</p>";
             exit;
         }
     }
@@ -57,16 +57,17 @@ try {
         $stmt = $db->prepare("INSERT OR REPLACE INTO key_value (key, value, updated_at) VALUES ('last_activity', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
         $stmt->execute();
 
-        header("Location: /success.html");
+        header("Location: /charging");
         exit;
     }
 
-    // Token is valid, but no matching user
-    header("Location: /ldap.php");
+    // Token is valid but no matching user → redirect to login
+    header("Location: /login");
     exit;
 
 } catch (Exception $e) {
     error_log("Error in redirect.php: " . $e->getMessage());
-    header("Location: /ldap.php");
+    // On any exception, redirect to login
+    header("Location: /login");
     exit;
 }

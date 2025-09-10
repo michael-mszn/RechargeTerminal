@@ -27,7 +27,7 @@ try {
     }
 
     $token = $result['value'];
-    $fullUrl = "https://ellioth.othdb.de/redirect.php?code=" . urlencode($token);
+    $fullUrl = "https://ellioth.othdb.de/api/redirect.php?code=" . urlencode($token);
 
     echo json_encode([
         'current_qr_code' => $fullUrl

@@ -6,6 +6,7 @@ import { useState, useEffect } from 'preact/hooks';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
 import Charging from './pages/Charging';
+import Login from './pages/Login';
 
 import './css/Navbar.css';
 
@@ -18,13 +19,13 @@ import micIcon from './images/mic.png';
 /* @ts-ignore */
 import disconnectIcon from './images/disconnect.png';
 
-
 let notifyCallback: ((msg: string) => void) | null = null;
 
 export function addNotification(msg: string) {
   if (notifyCallback) notifyCallback(msg);
 }
 
+// Notifications Component
 const Notifications = () => {
   const [notifs, setNotifs] = useState<{ id: number; text: string }[]>([]);
 
@@ -32,15 +33,9 @@ const Notifications = () => {
     notifyCallback = (msg: string) => {
       const id = Date.now();
       setNotifs((prev) => [...prev, { id, text: msg }]);
-
-      // Auto-remove after 5s
-      setTimeout(() => {
-        setNotifs((prev) => prev.filter((n) => n.id !== id));
-      }, 5000);
+      setTimeout(() => setNotifs((prev) => prev.filter((n) => n.id !== id)), 5000);
     };
-    return () => {
-      notifyCallback = null;
-    };
+    return () => { notifyCallback = null; };
   }, []);
 
   return (
@@ -49,9 +44,7 @@ const Notifications = () => {
         <div key={n.id} class="notification">
           <button
             class="notif-close"
-            onClick={() =>
-              setNotifs((prev) => prev.filter((m) => m.id !== n.id))
-            }
+            onClick={() => setNotifs((prev) => prev.filter((m) => m.id !== n.id))}
           >
             ×
           </button>
@@ -69,13 +62,9 @@ const App = () => {
 
   const AnyLink = Link as any;
 
-  // Prevent scrolling while holding Ellioth
   useEffect(() => {
-    if (isElliothHeld) {
-      document.body.classList.add('no-scroll');
-    } else {
-      document.body.classList.remove('no-scroll');
-    }
+    if (isElliothHeld) document.body.classList.add('no-scroll');
+    else document.body.classList.remove('no-scroll');
   }, [isElliothHeld]);
 
   const navItems = [
@@ -85,10 +74,7 @@ const App = () => {
     { href: '/charging', label: 'HOME', icon: homeIcon },
   ];
 
-  const handleHoldStart = (e: any) => {
-    e.preventDefault();
-    setElliothHeld(true);
-  };
+  const handleHoldStart = (e: any) => { e.preventDefault(); setElliothHeld(true); };
   const handleHoldEnd = () => setElliothHeld(false);
 
   return (
@@ -97,12 +83,14 @@ const App = () => {
         <Route path="/" component={Home} />
         <Route path="/profile" component={Profile} />
         <Route path="/charging" component={Charging} />
+        <Route path="/login" component={Login} />
       </Router>
 
-      {/* ✅ Notifications always mounted */}
+      {/* Notifications always mounted */}
       <Notifications />
 
-      {currentUrl !== '/' && (
+      {/* Navbar hidden on root and login pages */}
+      {currentUrl !== '/' && !currentUrl.startsWith('/login') && (
         <nav class="navbar">
           {navItems.map((item) => {
             const isActive = item.href === currentUrl;
@@ -112,9 +100,7 @@ const App = () => {
               return (
                 <div
                   key={item.label}
-                  class={`nav-button ${isActive ? 'active' : ''} ${
-                    isHeld ? 'held' : ''
-                  }`}
+                  class={`nav-button ${isActive ? 'active' : ''} ${isHeld ? 'held' : ''}`}
                   onMouseDown={handleHoldStart}
                   onMouseUp={handleHoldEnd}
                   onMouseLeave={handleHoldEnd}
@@ -141,6 +127,7 @@ const App = () => {
         </nav>
       )}
 
+      {/* Ellioth overlay */}
       {isElliothHeld && (
         <>
           <div class="page-dim"></div>
@@ -151,7 +138,6 @@ const App = () => {
               const maxScale = 0.6 + Math.random() * 0.3;
               const duration = 0.4 + Math.random() * 0.3;
               const delay = Math.random() * 0.5;
-
               return (
                 <div
                   key={i}
