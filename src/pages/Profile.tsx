@@ -8,6 +8,7 @@ export default function Profile() {
   const [isHistoryOpen, setHistoryOpen] = useState(false);
   const [isStatsOpen, setStatsOpen] = useState(false);
   const [isLogoutActive, setLogoutActive] = useState(false);
+  const [fullName, setFullName] = useState('Max Dummy Mustername');
 
   const historyRef = useRef<HTMLDivElement>(null);
   const statsRef = useRef<HTMLDivElement>(null);
@@ -164,6 +165,20 @@ export default function Profile() {
     fetchChargingSessions();
   }, []);
 
+  useEffect(() => {
+    const fetchFullName = async () => {
+      try {
+        const res = await fetch('/api/get-fullname.php', { credentials: 'same-origin' });
+        const data = await res.json();
+        if (data.fullName) setFullName(data.fullName);
+      } catch (err) {
+        console.error('Failed to fetch full name:', err);
+      }
+    };
+
+    fetchFullName();
+  }, []);
+
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -221,7 +236,7 @@ export default function Profile() {
   return (
     <div class="profile-container">
       <p ref={nameRef} className="profile-name">
-        Max Tim Mustermann
+        {fullName}
       </p>
       <img src={profilePic} alt="Profile" class="profile-picture" />
       <p id="balance" className="profile-balance">Balance: {balance}€</p>
