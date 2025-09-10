@@ -74,7 +74,7 @@
     font-family: Arial, sans-serif;
     font-weight: bold;
     font-size: clamp(1.5rem, 4vw, 2rem);
-    color: #ff3b92;
+    color: #a8e792;
     min-height: 2.5rem; /* reserve space */
     min-width: 10rem;   /* match buttons */
     display: flex;

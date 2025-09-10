@@ -80,7 +80,7 @@ export default function Charging() {
 
   const renderTimerDigits = () => {
     const digits = timerInput.map((d,i) => (
-      <span key={i} style={{ color: currentDigit===i && !timerActive ? '#66a9f4' : '#ff3b92' }}>
+      <span key={i} style={{ color: currentDigit===i && !timerActive ? '#ff3b92' : '#a8e792' }}>
         {d}
       </span>
     ));
