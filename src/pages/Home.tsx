@@ -25,56 +25,12 @@ export default function Home() {
   const [username, setUsername] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [chatReply, setChatReply] = useState<string>('');
+
+  const [replyVisible, setReplyVisible] = useState(false);
+  const [animatedReply, setAnimatedReply] = useState('');
+  const replyTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   const [slots, setSlots] = useState<{ slot: number; status: SlotStatus }[]>([]);
-
-  // New state for current time and date strings
-  const [currentTime, setCurrentTime] = useState<string>('');
-  const [currentDate, setCurrentDate] = useState<string>('');
-
-  // Format date as "Wednesday, September 11, 2025"
-  function formatDate(date: Date): string {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  }
-
-  // Format time like "10:00" (24h)
-  function formatTime(date: Date): string {
-    return date.toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    });
-  }
-
-  // Update time and date every second
-  useEffect(() => {
-    const updateDateTime = () => {
-      const now = new Date();
-      setCurrentDate(formatDate(now));
-      setCurrentTime(formatTime(now));
-    };
-
-    updateDateTime();
-    const interval = setInterval(updateDateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Poll generate-token.php to refresh the token
-  useEffect(() => {
-    const pollQRToken = () => {
-      fetch('/api/generate-token.php')
-        .then(() => {})
-        .catch(err => console.error("Token polling failed", err));
-    };
-    pollQRToken();
-    const interval = setInterval(pollQRToken, 1000);
-    return () => clearInterval(interval);
-  }, [username]);
 
   // Poll current user
   useEffect(() => {
@@ -88,16 +44,14 @@ export default function Home() {
         setUsername(null);
       }
     };
-
     checkCurrentUser();
     const interval = setInterval(checkCurrentUser, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Poll displayName every second when logged in
+  // Poll displayName
   useEffect(() => {
     if (!username) return;
-
     const fetchUserData = async () => {
       try {
         const nameRes = await fetch('/api/get-name.php');
@@ -108,12 +62,12 @@ export default function Home() {
         setDisplayName('User');
       }
     };
-
     fetchUserData();
     const interval = setInterval(fetchUserData, 1000);
     return () => clearInterval(interval);
   }, [username]);
 
+  // Poll for new chat reply and animate
   useEffect(() => {
     if (!username) return;
 
@@ -121,12 +75,30 @@ export default function Home() {
       try {
         const res = await fetch('/api/get-chatgpt-reply.php');
         const data = await res.json();
-        if (data.reply && data.reply.trim() !== "") {
-          setChatReply(data.reply);
+
+        if (data.reply && data.reply.trim() !== '') {
+          // Reset animation
+          setAnimatedReply('');
+          setReplyVisible(true);
+          if (replyTimerRef.current) clearTimeout(replyTimerRef.current);
+
+          // Animate typing effect
+          let i = 0;
+          const fullText = data.reply;
+          const interval = setInterval(() => {
+            setAnimatedReply((prev) => prev + fullText[i]);
+            i++;
+            if (i >= fullText.length) clearInterval(interval);
+          }, 30); // moderate speed
+
+          // Hide container after 20s
+          replyTimerRef.current = setTimeout(() => {
+            setReplyVisible(false);
+            setAnimatedReply('');
+          }, 20000);
         }
       } catch (err) {
-        console.error("Failed to fetch chat reply", err);
-        setChatReply("Error loading reply");
+        console.error('Failed to fetch chat reply', err);
       }
     };
 
@@ -152,7 +124,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Poll current QR code every 10s and render it
+  // Poll current QR code every second and render it
   useEffect(() => {
     const updateQRCode = async () => {
       try {
@@ -185,7 +157,7 @@ export default function Home() {
   };
 
   return (
-    <div class="fullscreen">
+    <div className="fullscreen">
       <div className="aspect-box">
         <div className="center-vertical">
           <div className="headline">
@@ -218,31 +190,28 @@ export default function Home() {
             })}
           </div>
 
-          <div
-            className={`qrcode-container time-element ${username ? 'qr-moved' : 'qr'}`}
-          >
-            {!username && <p className="time-element">Scan this QR code to access recharging:</p>}
+          <div className={`qrcode-container ${username ? 'qr-moved' : 'qr'}`}>
+            {!username && <p>Scan this QR code to access recharging:</p>}
             <canvas ref={canvasRef}></canvas>
           </div>
 
-          <p className="time-element">{currentDate}</p>
-          <p className="time-element fontstyle-time-text">{currentTime}</p>
-
-          <div className={`welcome time-element ${username ? '' : 'hidden'}`} id="welcome">
+          <div className={`welcome ${username ? '' : 'hidden'}`} id="welcome">
             Welcome, {displayName}
           </div>
 
-          <div className="ellioth-position">
-            <img src={elliothPng} className="ellioth floating" alt="Ellioth" />
+          {/* Reply container */}
+          <div className={`reply-container ${replyVisible ? '' : 'hidden'}`}>
+            <div className="ellioth-position">
+              <img src={elliothPng} className="ellioth floating" alt="Ellioth" />
+            </div>
+            <p className="time-element fontstyle-ellioth-name">Ellioth</p>
+            <div className="line-position">
+              <img src={linePng} className="line" />
+            </div>
+            <p className="time-element dialogue-box">
+              <span className="reply-animated">{animatedReply}</span>
+            </p>
           </div>
-          <p className="time-element fontstyle-ellioth-name">Ellioth</p>
-
-          <div className="line-position">
-            <img src={linePng} className="line" />
-          </div>
-          <p className="time-element dialogue-box">
-            {chatReply || "ChatGPT reply gets placed HERE"}
-          </p>
         </div>
       </div>
     </div>

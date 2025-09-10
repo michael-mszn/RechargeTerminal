@@ -124,8 +124,8 @@ body {
 .dialogue-box {
     font-family: 'Sansation', sans-serif;
     margin-top: 0.5%;
-    margin-left: 18%;
-    margin-right: 18%;
+    margin-left: 7.5%;
+    margin-right: 7.5%;
     word-wrap: break-word;   /* ensures long words wrap */
     white-space: normal;
     font-size: 0.8rem;
@@ -154,6 +154,8 @@ body {
 }
 
 .qrcode-container {
+    flex-direction: column;
+    align-items: center;
     transition: all 0.3s ease;
     margin-bottom: 0;
     display: flex;
@@ -178,4 +180,28 @@ body {
 
 .ellioth.floating {
     animation: float 3s ease-in-out infinite;
+}
+
+.reply-container .dialogue-box {
+    font-family: 'Sansation', sans-serif;
+    margin-top: 0.5%;
+    margin-left: 7.5%;
+    margin-right: 7.5%;
+    word-wrap: break-word;
+    white-space: normal;
+    font-size: 0.8rem;
+    text-align: center;
+    line-height: 1.1rem;
+    color: #848181;
+
+    /* Clamp to 7 lines */
+    display: -webkit-box;
+    -webkit-line-clamp: 7;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+
+    box-orient: vertical;
+    max-height: calc(1.1rem * 7);
+    overflow-wrap: break-word;
+    overflow: hidden;
 }
