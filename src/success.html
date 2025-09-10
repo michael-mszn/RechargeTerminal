@@ -474,7 +474,7 @@
   fetch("https://ellioth.othdb.de/get-name.php")
     .then(res => res.json())
     .then(data => {
-      document.getElementById("displayname").textContent = data.name || "Gast";
+      document.getElementById("displayname").textContent = data.name || "No Session Found";
     })
     .catch(() => {
       document.getElementById("displayname").textContent = "Unbekannt";

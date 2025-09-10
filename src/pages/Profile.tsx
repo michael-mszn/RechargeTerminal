@@ -83,6 +83,16 @@ export default function Profile() {
     }
   };
 
+  const handleLogoutClick = async () => {
+    try {
+      await fetch('/api/logout.php', { method: 'POST', credentials: 'same-origin' });
+      window.location.href = '/login'; // redirect to login page
+    } catch (err) {
+      console.error('Logout failed', err);
+      alert('Logout failed'); // simple fallback feedback
+    }
+  };
+
   // -------------------
   // HISTORY TABLE DATA
   // -------------------
@@ -160,6 +170,7 @@ export default function Profile() {
         class={`profile-logout ${isLogoutActive ? 'active' : ''}`}
         onMouseDown={() => setLogoutActive(true)}
         onMouseUp={() => setLogoutActive(false)}
+        onClick={handleLogoutClick}
       >
         Logout
       </p>
