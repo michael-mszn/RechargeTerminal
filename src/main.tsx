@@ -18,6 +18,51 @@ import micIcon from './images/mic.png';
 /* @ts-ignore */
 import disconnectIcon from './images/disconnect.png';
 
+
+let notifyCallback: ((msg: string) => void) | null = null;
+
+export function addNotification(msg: string) {
+  if (notifyCallback) notifyCallback(msg);
+}
+
+const Notifications = () => {
+  const [notifs, setNotifs] = useState<{ id: number; text: string }[]>([]);
+
+  useEffect(() => {
+    notifyCallback = (msg: string) => {
+      const id = Date.now();
+      setNotifs((prev) => [...prev, { id, text: msg }]);
+
+      // Auto-remove after 5s
+      setTimeout(() => {
+        setNotifs((prev) => prev.filter((n) => n.id !== id));
+      }, 5000);
+    };
+    return () => {
+      notifyCallback = null;
+    };
+  }, []);
+
+  return (
+    <div class="notifications-container">
+      {notifs.map((n) => (
+        <div key={n.id} class="notification">
+          <button
+            class="notif-close"
+            onClick={() =>
+              setNotifs((prev) => prev.filter((m) => m.id !== n.id))
+            }
+          >
+            ×
+          </button>
+          <span class="notif-text">{n.text}</span>
+          <div class="notif-progress"></div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const App = () => {
   const [currentUrl, setCurrentUrl] = useState('/');
   const [isElliothHeld, setElliothHeld] = useState(false);
@@ -40,9 +85,8 @@ const App = () => {
     { href: '/charging', label: 'HOME', icon: homeIcon },
   ];
 
-  // Handle hold-only behavior
   const handleHoldStart = (e: any) => {
-    e.preventDefault(); // prevent clicks
+    e.preventDefault();
     setElliothHeld(true);
   };
   const handleHoldEnd = () => setElliothHeld(false);
@@ -55,6 +99,9 @@ const App = () => {
         <Route path="/charging" component={Charging} />
       </Router>
 
+      {/* ✅ Notifications always mounted */}
+      <Notifications />
+
       {currentUrl !== '/' && (
         <nav class="navbar">
           {navItems.map((item) => {
@@ -65,7 +112,9 @@ const App = () => {
               return (
                 <div
                   key={item.label}
-                  class={`nav-button ${isActive ? 'active' : ''} ${isHeld ? 'held' : ''}`}
+                  class={`nav-button ${isActive ? 'active' : ''} ${
+                    isHeld ? 'held' : ''
+                  }`}
                   onMouseDown={handleHoldStart}
                   onMouseUp={handleHoldEnd}
                   onMouseLeave={handleHoldEnd}
@@ -94,19 +143,12 @@ const App = () => {
 
       {isElliothHeld && (
         <>
-          {/* Dim background */}
           <div class="page-dim"></div>
-
-          {/* Overlay text */}
-          <div class="ellioth-overlay-text">
-            Ellioth is listening ...
-          </div>
-
-          {/* Animated bars */}
+          <div class="ellioth-overlay-text">Ellioth is listening ...</div>
           <div class="ellioth-bars">
             {Array.from({ length: 8 }).map((_, i) => {
-              const minScale = 0.2 + Math.random() * 0.1; // slightly different rest sizes
-              const maxScale = 0.6 + Math.random() * 0.3; // reduced max size (~30% less)
+              const minScale = 0.2 + Math.random() * 0.1;
+              const maxScale = 0.6 + Math.random() * 0.3;
               const duration = 0.4 + Math.random() * 0.3;
               const delay = Math.random() * 0.5;
 
