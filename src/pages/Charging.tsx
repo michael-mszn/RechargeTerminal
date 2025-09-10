@@ -11,7 +11,20 @@ export default function Charging() {
   const [currentDigit, setCurrentDigit] = useState<number | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [overlayMarginTop, setOverlayMarginTop] = useState('15vh');
+  const [displayName, setDisplayName] = useState<string>(''); // 👈 new state
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch display name from backend
+  useEffect(() => {
+    fetch('https://ellioth.othdb.de/api/get-name.php')
+      .then((res) => res.json())
+      .then((data) => {
+        setDisplayName(data.name || 'No Session Found');
+      })
+      .catch(() => {
+        setDisplayName('Unknown');
+      });
+  }, []);
 
   // Blink colon only when timer is active
   useEffect(() => {
@@ -42,7 +55,6 @@ export default function Charging() {
   // ✅ Apply/Cancel with validation
   const handleApplyCancel = () => {
     if (!timerActive) {
-      // User is trying to apply → validate time
       const hours = parseInt(timerInput[0] + timerInput[1], 10);
       const minutes = parseInt(timerInput[2] + timerInput[3], 10);
 
@@ -53,7 +65,6 @@ export default function Charging() {
 
       setTimerActive(true);
     } else {
-      // Cancel
       setTimerActive(false);
     }
 
@@ -124,11 +135,9 @@ export default function Charging() {
   const confirmOverlayInput = () => {
     setShowOverlay(false);
     setCurrentDigit(null);
-    // Scroll to bottom after confirming
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   };
 
-  // --- NEW: compute finish time ---
   const getFinishTime = () => {
     const hours = parseInt(timerInput[0] + timerInput[1], 10);
     const minutes = parseInt(timerInput[2] + timerInput[3], 10);
@@ -140,7 +149,7 @@ export default function Charging() {
 
   return (
     <div className="charging-page">
-      <h2 className="greeting">Hello, Max</h2>
+      <h2 className="greeting">Hello, {displayName}</h2>
       <p className="charging-status">
         Your car is charging since 2h34min. lore ipsum dolor sit lore ipsum
         dolor sitlore ipsum dolor sitlore ipsum dolor sit

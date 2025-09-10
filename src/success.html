@@ -201,32 +201,6 @@
       });
   }
 
-  function handleDisconnectClick() {
-    fetch("https://ellioth.othdb.de/disconnect.php")
-      .then(res => res.text())
-      .then(() => {
-        isDisconnected = true;
-        document.getElementById("status").textContent = "Sie sind getrennt. Bitte erneut verbinden.";
-        document.getElementById("result").textContent = "";
-      })
-      .catch(err => {
-        console.error("Disconnect error:", err);
-        document.getElementById("result").textContent = "Fehler beim Trennen.";
-      });
-  }
-
-  function handleLogoutClick() {
-    fetch("https://ellioth.othdb.de/logout.php", {
-      method: "POST"
-    })
-      .then(() => {
-        window.location.href = "https://ellioth.othdb.de/ldap.php";
-      })
-      .catch(() => {
-        document.getElementById("result").textContent = "Logout fehlgeschlagen.";
-      });
-  }
-
   function notifyIfNotReady() {
     const resultDiv = document.getElementById("result");
     if (isDisconnected) {
@@ -239,22 +213,6 @@
     }
     return false;
   }
-
-  function fetchBalance() {
-    fetch("https://ellioth.othdb.de/get-current-users-credit.php?user=" + encodeURIComponent(getCookie('current_qr_code')))
-      .then(res => res.json())
-      .then(data => {
-        if (data.balance !== undefined) {
-          document.getElementById("balance").textContent = parseFloat(data.balance).toFixed(2);
-        }
-      })
-      .catch(err => {
-        console.error("Balance fetch error:", err);
-      });
-  }
-
-  setInterval(fetchBalance, 1000);
-  fetchBalance();
 
 
   function sendPrompt() {
@@ -382,61 +340,6 @@
   updateChargingInfo();
 
 
-
-  let sessionsData = [];
-  let currentPage = 1;
-  const rowsPerPage = 10;
-
-  function fetchChargingSessions() {
-    fetch('https://ellioth.othdb.de/get-charging-sessions.php')
-      .then(res => res.json())
-      .then(data => {
-        sessionsData = data.sessions || [];
-        currentPage = 1;
-        renderTable();
-      })
-      .catch(err => {
-        console.error('Fehler beim Laden der Sitzungen:', err);
-      });
-  }
-
-  function renderTable() {
-    const tableBody = document.querySelector('#chargingSessionsTable tbody');
-    const pagination = document.getElementById('paginationControls');
-    tableBody.innerHTML = '';
-    pagination.innerHTML = '';
-
-    const start = (currentPage - 1) * rowsPerPage;
-    const paginatedItems = sessionsData.slice(start, start + rowsPerPage);
-
-    paginatedItems.forEach(session => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-      <td>${session.kwh.toFixed(2)}</td>
-      <td>€${session.cost.toFixed(2)}</td>
-      <td>${session.start_time}</td>
-      <td>${session.end_time}</td>
-      <td>${Math.floor(session.duration_seconds / 60)} Min</td>
-    `;
-      tableBody.appendChild(row);
-    });
-
-    const totalPages = Math.ceil(sessionsData.length / rowsPerPage);
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      btn.disabled = i === currentPage;
-      btn.onclick = () => {
-        currentPage = i;
-        renderTable();
-      };
-      pagination.appendChild(btn);
-    }
-  }
-
-  fetchChargingSessions();
-
-
   function startSpeechRecognition() {
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       alert('Spracherkennung wird nicht unterstützt.');
@@ -470,15 +373,6 @@
 
     recognition.start();
   }
-
-  fetch("https://ellioth.othdb.de/get-name.php")
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("displayname").textContent = data.name || "No Session Found";
-    })
-    .catch(() => {
-      document.getElementById("displayname").textContent = "Unbekannt";
-    });
 
 
   // === Push Notification Setup ===
