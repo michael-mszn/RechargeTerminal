@@ -100,12 +100,12 @@
 }
 
 .ellioth-bar {
-    width: 30px; /* 50% thicker */
-    height: 100%; /* ensure visible baseline */
+    width: 30px;
+    height: 100%;
     background-color: #ff3b92;
-    border-radius: 12px; /* rounder corners */
+    border-radius: 12px;
     transform-origin: bottom;
-    transform: scaleY(0.2); /* default small size */
+    transform: scaleY(0.2);
     animation-name: bounce-js;
     animation-timing-function: ease-in-out;
     animation-iteration-count: infinite;
@@ -120,22 +120,24 @@ body.no-scroll {
     overflow: hidden;
 }
 
+/* Notifications container */
 .notifications-container {
     position: fixed;
     left: 50%;
-    bottom: 60px; /* always above navbar */
+    bottom: 60px;
     transform: translateX(-50%);
     z-index: 5000;
     display: flex;
-    flex-direction: column-reverse; /* newest on bottom, above navbar */
+    flex-direction: column-reverse;
     align-items: center;
     pointer-events: none;
-    gap: 0.5rem; /* spacing between notifications */
+    gap: 0.5rem;
     width: 100%;
 }
 
+/* Notification bubble */
 .notification {
-    position: relative; /* inside container, now bottom is handled by flex */
+    position: relative;
     display: flex;
     align-items: center;
     background: #ececec;
@@ -143,9 +145,30 @@ body.no-scroll {
     padding: 0.5rem 1rem 0.5rem 2rem;
     max-width: 60%;
     pointer-events: auto;
+    overflow: hidden; /* ensures green fill stays inside rounded edges */
     animation: fadeIn 0.3s ease;
 }
 
+/* Green fill effect */
+.notification::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0%;
+    height: 100%;
+    background-color: #a8e792;
+    border-radius: 9999px;
+    z-index: 0;
+    animation: fillGreen 5s linear forwards;
+}
+
+@keyframes fillGreen {
+    from { width: 0%; }
+    to { width: 100%; }
+}
+
+/* Fade animations */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -168,7 +191,10 @@ body.no-scroll {
     }
 }
 
+/* Text and close button */
 .notif-text {
+    position: relative; /* above the green fill */
+    z-index: 1;
     color: #000;
     font-family: Arial, sans-serif;
     font-size: 1rem;
@@ -178,10 +204,9 @@ body.no-scroll {
 }
 
 .notif-close {
-    position: absolute;
-    left: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
+    position: relative; /* above the green fill */
+    z-index: 1;
+    margin-right: 0.5rem;
     background: none;
     border: none;
     color: #ff3b92;
@@ -191,23 +216,3 @@ body.no-scroll {
     padding: 0;
     line-height: 1;
 }
-
-.notif-progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 4px;
-    background: #a8e792;
-    width: 100%;
-    animation: progress 5s linear forwards;
-}
-
-@keyframes progress {
-    from {
-        transform: translateX(-100%);
-    }
-    to {
-        transform: translateX(0);
-    }
-}
-
