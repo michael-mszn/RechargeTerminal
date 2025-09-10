@@ -169,3 +169,13 @@ body {
     transform: scale(1.0);
     margin-bottom: 1%;
 }
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+.ellioth.floating {
+    animation: float 3s ease-in-out infinite;
+}

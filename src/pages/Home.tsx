@@ -32,17 +32,17 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDate, setCurrentDate] = useState<string>('');
 
-  // Function to format date like "Samstag, 1. Februar 2025"
+  // Format date as "Wednesday, September 11, 2025"
   function formatDate(date: Date): string {
-    return date.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString('en-US', {
       weekday: 'long',
-      day: 'numeric',
       month: 'long',
+      day: 'numeric',
       year: 'numeric',
     });
   }
 
-  // Function to format time like "10:00"
+  // Format time like "10:00" (24h)
   function formatTime(date: Date): string {
     return date.toLocaleTimeString('de-DE', {
       hour: '2-digit',
@@ -59,7 +59,7 @@ export default function Home() {
       setCurrentTime(formatTime(now));
     };
 
-    updateDateTime(); // initial call
+    updateDateTime();
     const interval = setInterval(updateDateTime, 1000);
     return () => clearInterval(interval);
   }, []);
@@ -71,24 +71,18 @@ export default function Home() {
         .then(() => {})
         .catch(err => console.error("Token polling failed", err));
     };
-
-    pollQRToken(); // Run immediately
+    pollQRToken();
     const interval = setInterval(pollQRToken, 1000);
-
     return () => clearInterval(interval);
   }, [username]);
 
-  // Poll for current user
+  // Poll current user
   useEffect(() => {
     const checkCurrentUser = async () => {
       try {
         const res = await fetch('/api/get-current-username.php');
         const data = await res.json();
-        if (!data.username) {
-          setUsername(null);
-        } else {
-          setUsername(data.username);
-        }
+        setUsername(data.username || null);
       } catch (err) {
         console.error('Failed to check user', err);
         setUsername(null);
@@ -117,7 +111,6 @@ export default function Home() {
 
     fetchUserData();
     const interval = setInterval(fetchUserData, 1000);
-
     return () => clearInterval(interval);
   }, [username]);
 
@@ -128,7 +121,6 @@ export default function Home() {
       try {
         const res = await fetch('/api/get-chatgpt-reply.php');
         const data = await res.json();
-
         if (data.reply && data.reply.trim() !== "") {
           setChatReply(data.reply);
         }
@@ -182,7 +174,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Map statuses to icons
   const getCarIcon = (status: SlotStatus): string | null => {
     switch (status) {
       case 'charging': return carCharging;
@@ -226,10 +217,9 @@ export default function Home() {
               );
             })}
           </div>
+
           <div
-            className={`qrcode-container time-element ${
-              username ? 'qr-moved' : 'qr'
-            }`}
+            className={`qrcode-container time-element ${username ? 'qr-moved' : 'qr'}`}
           >
             {!username && <p className="time-element">Scan this QR code:</p>}
             <canvas ref={canvasRef}></canvas>
@@ -243,9 +233,10 @@ export default function Home() {
           </div>
 
           <div className="ellioth-position">
-            <img src={elliothPng} className="ellioth" alt="Ellioth" />
+            <img src={elliothPng} className="ellioth floating" alt="Ellioth" />
           </div>
           <p className="time-element fontstyle-ellioth-name">Ellioth</p>
+
           <div className="line-position">
             <img src={linePng} className="line" />
           </div>
