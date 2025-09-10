@@ -5,26 +5,53 @@ import carImage from '../images/car-home-menu.png';
 import { addNotification } from '../main';
 
 export default function Charging() {
+  const [displayName, setDisplayName] = useState("Loading...");
+  const [currentAmps, setCurrentAmps] = useState(0);
+  // @ts-ignore
+  const [targetAmps, setTargetAmps] = useState(30); // dummy initial amps value
   const [timerActive, setTimerActive] = useState(false);
   const [showColon, setShowColon] = useState(true);
   const [timerInput, setTimerInput] = useState(['0', '0', '0', '0']);
   const [currentDigit, setCurrentDigit] = useState<number | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [overlayMarginTop, setOverlayMarginTop] = useState('15vh');
-  const [displayName, setDisplayName] = useState<string>(''); // 👈 new state
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch display name from backend
+  // Fetch display name from API
   useEffect(() => {
-    fetch('https://ellioth.othdb.de/api/get-name.php')
-      .then((res) => res.json())
-      .then((data) => {
-        setDisplayName(data.name || 'No Session Found');
-      })
-      .catch(() => {
-        setDisplayName('Unknown');
-      });
+    fetch("https://ellioth.othdb.de/api/get-name.php")
+      .then(res => res.json())
+      .then(data => setDisplayName(data.name || "No Session Found"))
+      .catch(() => setDisplayName("Unknown"));
   }, []);
+
+  // Animation helper for amps
+  const animateValue = (from: number, to: number, duration: number) => {
+    let start: number | null = null;
+
+    const easeOutQuad = (t: number) => t * (2 - t);
+
+    const step = (timestamp: number) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const eased = easeOutQuad(progress);
+      const value = Math.floor(from + (to - from) * eased);
+      setCurrentAmps(value);
+
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        setCurrentAmps(to);
+      }
+    };
+
+    requestAnimationFrame(step);
+  };
+
+  // Play animation on initial load
+  useEffect(() => {
+    animateValue(0, targetAmps, 1000);
+  }, [targetAmps]);
 
   // Blink colon only when timer is active
   useEffect(() => {
@@ -52,7 +79,7 @@ export default function Charging() {
     }
   }, [showOverlay]);
 
-  // ✅ Apply/Cancel with validation
+  // Apply/Cancel with validation
   const handleApplyCancel = () => {
     if (!timerActive) {
       const hours = parseInt(timerInput[0] + timerInput[1], 10);
@@ -157,7 +184,7 @@ export default function Charging() {
 
       <div className="car-image-wrapper">
         <img src={carImage} alt="Car charging" className="car-image" />
-        <span className="current-overlay">30A</span>
+        <span className="current-overlay">{currentAmps}A</span>
       </div>
 
       {!timerActive ? (
