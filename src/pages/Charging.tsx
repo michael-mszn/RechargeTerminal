@@ -18,11 +18,9 @@ export default function Charging() {
       const interval = setInterval(() => setShowColon(prev => !prev), 1000);
       return () => clearInterval(interval);
     } else {
-      // Reset colon to visible when not active
       setShowColon(true);
     }
   }, [timerActive]);
-
 
   useEffect(() => {
     if (showOverlay) {
@@ -97,13 +95,25 @@ export default function Charging() {
   const confirmOverlayInput = () => {
     setShowOverlay(false);
     setCurrentDigit(null);
+    // Scroll to bottom after confirming
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  };
+
+  // --- NEW: compute finish time ---
+  const getFinishTime = () => {
+    const hours = parseInt(timerInput[0] + timerInput[1], 10);
+    const minutes = parseInt(timerInput[2] + timerInput[3], 10);
+    const now = new Date();
+    now.setHours(now.getHours() + hours);
+    now.setMinutes(now.getMinutes() + minutes);
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
     <div className="charging-page">
       <h2 className="greeting">Hello, Max</h2>
       <p className="charging-status">
-        Your car is charging since 2h34min. lore ipsum dolor sit lore ipsum dolor sitlore ipsum dolor sitlore ipsum dolor sit
+        Your car is charging since 2h34min.
       </p>
 
       <div className="car-image-wrapper">
@@ -136,6 +146,13 @@ export default function Charging() {
             <button className="close-overlay" onClick={() => setShowOverlay(false)}>×</button>
             <div className="optional-timer">Set optional charge timer</div>
             <div className="timer-box">{renderTimerDigits()}</div>
+
+            <div className="finish-time">
+              The charging session will finish at{' '}
+              <span className="finish-time-green">{getFinishTime()}</span>
+            </div>
+
+
             <button className="confirm-overlay" onClick={confirmOverlayInput}>Confirm</button>
           </div>
         </div>
