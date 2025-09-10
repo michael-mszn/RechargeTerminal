@@ -1,5 +1,5 @@
 /** @jsxImportSource preact */
-import { useState, useRef, useLayoutEffect, useMemo } from 'preact/hooks';
+import { useState, useRef, useLayoutEffect, useEffect } from 'preact/hooks';
 import '../css/Profile.css';
 {/* @ts-ignore */}
 import profilePic from '../images/profile-picture.png';
@@ -96,14 +96,47 @@ export default function Profile() {
   // -------------------
   // HISTORY TABLE DATA
   // -------------------
-  const dummyHistory = useMemo(() => {
-    return Array.from({ length: 23 }, (_, i) => ({
-      date: `0${(i % 12) + 1}/${(i % 28) + 1}/2025`,
-      kWh: (Math.random() * 10 + 1).toFixed(2),
-      cost: `-${(Math.random() * 5 + 0.5).toFixed(2)}€`,
-      duration: Math.floor(Math.random() * 120) + 10,
+  const [dummyHistory, setDummyHistory] = useState(() => {
+    // keep an initial empty array to avoid undefined issues
+    return Array.from({ length: 5 }, () => ({
+      date: '',
+      kWh: '',
+      cost: '',
+      duration: 0,
     }));
-  }, []); // generated only once
+  });
+
+  useEffect(() => {
+    async function fetchChargingSessions() {
+      try {
+        const res = await fetch('/api/get-charging-sessions.php', { credentials: 'same-origin' });
+        const data = await res.json();
+        const sessions = data.sessions || [];
+
+        const formatted = sessions.map((s: any) => {
+          const startDate = new Date(s.start_time);
+          const dateStr = `${String(startDate.getMonth() + 1).padStart(2, '0')}/${String(
+            startDate.getDate()
+          ).padStart(2, '0')}/${startDate.getFullYear()}`;
+
+          return {
+            date: dateStr,
+            kWh: s.kwh.toFixed(2),
+            cost: `-${s.cost.toFixed(2)}€`,
+            duration: Math.ceil(s.duration_seconds / 60),
+          };
+        });
+
+        setDummyHistory(formatted);
+        setCurrentPage(1); // reset pagination to first page
+      } catch (err) {
+        console.error('Error fetching charging sessions:', err);
+      }
+    }
+
+    fetchChargingSessions();
+  }, []);
+
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
