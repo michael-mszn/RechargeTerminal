@@ -25,6 +25,25 @@ export function addNotification(msg: string) {
   if (notifyCallback) notifyCallback(msg);
 }
 
+
+async function handleDisconnect() {
+  try {
+    const res = await fetch('/api/disconnect.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+    });
+
+    if (res.ok) {
+      addNotification('Disconnected. Scan the QR code again to access the terminal.');
+    } else {
+      addNotification('Error: You need a connection to the terminal for this action.');
+    }
+  } catch (err) {
+    console.error('Disconnect error:', err);
+    addNotification('Error: You need a connection to the terminal for this action.');
+  }
+}
+
 // Notifications Component
 const Notifications = () => {
   const [notifs, setNotifs] = useState<{ id: number; text: string }[]>([]);
@@ -35,7 +54,9 @@ const Notifications = () => {
       setNotifs((prev) => [...prev, { id, text: msg }]);
       setTimeout(() => setNotifs((prev) => prev.filter((n) => n.id !== id)), 5000);
     };
-    return () => { notifyCallback = null; };
+    return () => {
+      notifyCallback = null;
+    };
   }, []);
 
   return (
@@ -74,7 +95,10 @@ const App = () => {
     { href: '/charging', label: 'HOME', icon: homeIcon },
   ];
 
-  const handleHoldStart = (e: any) => { e.preventDefault(); setElliothHeld(true); };
+  const handleHoldStart = (e: any) => {
+    e.preventDefault();
+    setElliothHeld(true);
+  };
   const handleHoldEnd = () => setElliothHeld(false);
 
   return (
@@ -106,6 +130,19 @@ const App = () => {
                   onMouseLeave={handleHoldEnd}
                   onTouchStart={handleHoldStart}
                   onTouchEnd={handleHoldEnd}
+                >
+                  <img src={item.icon} class="nav-icon" alt={item.label} />
+                  <span>{item.label}</span>
+                </div>
+              );
+            }
+
+            if (item.label === 'DISCONNECT') {
+              return (
+                <div
+                  key={item.label}
+                  class="nav-button disconnect-btn"
+                  onClick={handleDisconnect}
                 >
                   <img src={item.icon} class="nav-icon" alt={item.label} />
                   <span>{item.label}</span>

@@ -208,3 +208,12 @@ body.no-scroll {
     line-height: 1;
     z-index: 2;
 }
+
+.nav-button.disconnect-btn:active {
+    background-color: #ff3b92 !important;
+    color: #fff !important;
+}
+
+.nav-button.disconnect-btn:active .nav-icon {
+    filter: brightness(0) invert(1);
+}
