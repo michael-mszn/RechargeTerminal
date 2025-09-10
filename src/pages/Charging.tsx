@@ -124,6 +124,18 @@ export default function Charging() {
   const confirmOverlayInput = () => {
     setShowOverlay(false);
     setCurrentDigit(null);
+    // Scroll to bottom after confirming
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  };
+
+  // --- NEW: compute finish time ---
+  const getFinishTime = () => {
+    const hours = parseInt(timerInput[0] + timerInput[1], 10);
+    const minutes = parseInt(timerInput[2] + timerInput[3], 10);
+    const now = new Date();
+    now.setHours(now.getHours() + hours);
+    now.setMinutes(now.getMinutes() + minutes);
+    return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -180,6 +192,12 @@ export default function Charging() {
             </button>
             <div className="optional-timer">Set optional charge timer</div>
             <div className="timer-box">{renderTimerDigits()}</div>
+
+            <div className="finish-time">
+              The charging session will finish at{' '}
+              <span className="finish-time-green">{getFinishTime()}</span>
+            </div>
+
             <button className="confirm-overlay" onClick={confirmOverlayInput}>
               Confirm
             </button>

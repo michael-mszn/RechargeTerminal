@@ -120,81 +120,71 @@ body.no-scroll {
     overflow: hidden;
 }
 
-/* Notifications container */
+/* Notification system */
 .notifications-container {
     position: fixed;
     left: 50%;
-    bottom: 60px;
+    bottom: 60px; /* always above navbar */
     transform: translateX(-50%);
     z-index: 5000;
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column-reverse; /* newest on bottom */
     align-items: center;
     pointer-events: none;
     gap: 0.5rem;
     width: 100%;
 }
 
-/* Notification bubble */
 .notification {
     position: relative;
     display: flex;
     align-items: center;
     background: #ececec;
     border-radius: 9999px;
-    padding: 0.5rem 1rem 0.5rem 2rem;
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
     max-width: 60%;
     pointer-events: auto;
-    overflow: hidden; /* ensures green fill stays inside rounded edges */
+    overflow: hidden;
     animation: fadeIn 0.3s ease;
 }
 
-/* Green fill effect */
+/* Green fill using scale transform to preserve rounded ends */
 .notification::before {
     content: '';
     position: absolute;
     left: 0;
     top: 0;
-    width: 0%;
+    width: 100%;
     height: 100%;
     background-color: #a8e792;
     border-radius: 9999px;
+    transform: scaleX(0);
+    transform-origin: left;
     z-index: 0;
     animation: fillGreen 5s linear forwards;
 }
 
 @keyframes fillGreen {
-    from { width: 0%; }
-    to { width: 100%; }
-}
-
-/* Fade animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
 }
 
 .notification.exit {
     animation: fadeOut 0.3s ease forwards;
 }
 
-@keyframes fadeOut {
-    to {
-        opacity: 0;
-        transform: translateY(20px);
-    }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-/* Text and close button */
+@keyframes fadeOut {
+    to { opacity: 0; transform: translateY(20px); }
+}
+
 .notif-text {
-    position: relative; /* above the green fill */
-    z-index: 1;
+    position: relative;
+    z-index: 1; /* above green fill */
     color: #000;
     font-family: Arial, sans-serif;
     font-size: 1rem;
@@ -204,15 +194,17 @@ body.no-scroll {
 }
 
 .notif-close {
-    position: relative; /* above the green fill */
-    z-index: 1;
-    margin-right: 0.5rem;
+    position: absolute; /* absolutely positioned inside notification */
+    left: 1rem; /* very close to left edge */
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.8rem; /* bigger X */
     background: none;
     border: none;
     color: #ff3b92;
-    font-size: 1.2rem;
     font-weight: bold;
     cursor: pointer;
     padding: 0;
     line-height: 1;
+    z-index: 2;
 }
