@@ -53,6 +53,7 @@ export default function Profile() {
   const [currentWeekStart, setCurrentWeekStart] = useState(getMonday(new Date()));
   const [leftPressed, setLeftPressed] = useState(false);
   const [rightPressed, setRightPressed] = useState(false);
+  const [balance, setBalance] = useState('0.00');
 
   function getMonday(d: Date) {
     const date = new Date(d);
@@ -92,6 +93,32 @@ export default function Profile() {
       alert('Logout failed'); // simple fallback feedback
     }
   };
+
+  useEffect(() => {
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+      return '';
+    };
+
+    const fetchBalance = async () => {
+      try {
+        const userToken = getCookie('current_qr_code') || '';
+        const res = await fetch(`/api/get-current-users-credit.php?user=${encodeURIComponent(userToken)}`, { credentials: 'same-origin' });
+        const data = await res.json();
+        if (data.balance !== undefined) {
+          setBalance(parseFloat(data.balance).toFixed(2));
+        }
+      } catch (err) {
+        console.error('Balance fetch error:', err);
+      }
+    };
+
+    fetchBalance();
+    const interval = setInterval(fetchBalance, 1000);
+    return () => clearInterval(interval); // cleanup on unmount
+  }, []);
 
   // -------------------
   // HISTORY TABLE DATA
@@ -193,14 +220,14 @@ export default function Profile() {
 
   return (
     <div class="profile-container">
-      <p ref={nameRef} class="profile-name">
+      <p ref={nameRef} className="profile-name">
         Max Tim Mustermann
       </p>
       <img src={profilePic} alt="Profile" class="profile-picture" />
-      <p class="profile-balance">Balance: 183.86€</p>
+      <p id="balance" className="profile-balance">Balance: {balance}€</p>
 
       <p
-        class={`profile-logout ${isLogoutActive ? 'active' : ''}`}
+        className={`profile-logout ${isLogoutActive ? 'active' : ''}`}
         onMouseDown={() => setLogoutActive(true)}
         onMouseUp={() => setLogoutActive(false)}
         onClick={handleLogoutClick}
@@ -228,27 +255,27 @@ export default function Profile() {
         }}
       >
         <div className="drawer-content-inner">
-          <p class="stats-title">CHARGING HISTORY</p>
+          <p className="stats-title">CHARGING HISTORY</p>
 
           {/* History Table */}
           <table class="history-table">
             <thead>
-              <tr>
-                <th>DATE</th>
-                <th>KWH</th>
-                <th>COSTS</th>
-                <th>MINUTES</th>
-              </tr>
+            <tr>
+              <th>DATE</th>
+              <th>KWH</th>
+              <th>COSTS</th>
+              <th>MINUTES</th>
+            </tr>
             </thead>
             <tbody>
-              {paddedData.map((row, idx) => (
-                <tr key={idx}>
-                  <td>{row.date}</td>
-                  <td>{row.kWh}</td>
-                  <td>{row.cost}</td>
-                  <td>{row.duration === 0 ? '\u2007' : row.duration}</td>
-                </tr>
-              ))}
+            {paddedData.map((row, idx) => (
+              <tr key={idx}>
+                <td>{row.date}</td>
+                <td>{row.kWh}</td>
+                <td>{row.cost}</td>
+                <td>{row.duration === 0 ? '\u2007' : row.duration}</td>
+              </tr>
+            ))}
             </tbody>
           </table>
 
@@ -308,7 +335,7 @@ export default function Profile() {
         }}
       >
         <div class="drawer-content-inner">
-          <p class="stats-title">MINUTES CHARGED PER DAY</p>
+          <p className="stats-title">MINUTES CHARGED PER DAY</p>
 
           {/* DATE SELECTOR */}
           <div class="date-selector">
