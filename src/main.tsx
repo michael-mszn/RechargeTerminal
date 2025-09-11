@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import Profile from './pages/Profile';
 import Charging from './pages/Charging';
 import Login from './pages/Login';
+import Test from './pages/Test';
 
 import './css/Navbar.css';
 
@@ -141,10 +142,12 @@ const App = () => {
   const [isElliothHeld, setElliothHeld] = useState(false);
   const [needsPosition, setNeedsPosition] = useState(true);
   const [isConnected, setIsConnected] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null); // null = loading
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
   const recognitionRef = useRef<any>(null);
 
   const AnyLink = Link as any;
+
+  const publicPaths = ['/', '/login', '/test'];
 
   function hasSessionCookie(): boolean {
     return document.cookie.split(';').some(c => c.trim().startsWith('current_qr_code='));
@@ -155,12 +158,12 @@ const App = () => {
     const authorized = hasSessionCookie();
     setIsAuthorized(authorized);
 
-    if (!authorized && window.location.pathname !== '/' && window.location.pathname !== '/login') {
+    if (!authorized && !publicPaths.includes(window.location.pathname)) {
       window.location.replace('/login');
     }
   }, []);
 
-  // --- Initialize connection status (separate from isAuthorized) ---
+  // --- Initialize connection status ---
   useEffect(() => {
     fetch("https://ellioth.othdb.de/api/get-name.php")
       .then(res => res.json())
@@ -181,14 +184,9 @@ const App = () => {
   ];
 
   const startSpeechRecognition = () => {
-    if (!isConnected) {
-      addNotification("You need to be connected to use Ellioth.");
-      return;
-    }
-
+    if (!isConnected) { addNotification("You need to be connected to use Ellioth."); return; }
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      alert('Speech recognition is not supported.');
-      return;
+      alert('Speech recognition is not supported.'); return;
     }
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -224,10 +222,7 @@ const App = () => {
 
   const handleHoldStart = (e: any) => {
     e.preventDefault();
-    if (!isConnected) {
-      addNotification("You need to be connected to use Ellioth.");
-      return;
-    }
+    if (!isConnected) { addNotification("You need to be connected to use Ellioth."); return; }
     setElliothHeld(true);
     startSpeechRecognition();
   };
@@ -238,10 +233,7 @@ const App = () => {
   };
 
   const handleDisconnect = async () => {
-    if (!isConnected) {
-      addNotification("You are already disconnected.");
-      return;
-    }
+    if (!isConnected) { addNotification("You are already disconnected."); return; }
 
     try {
       const res = await fetch('/api/disconnect.php', { method: 'POST', credentials: 'same-origin' });
@@ -256,11 +248,11 @@ const App = () => {
     }
   };
 
-  const showNavbar = currentUrl !== '/' && !currentUrl.startsWith('/login');
+  const showNavbar = currentUrl !== '/' && !currentUrl.startsWith('/login') && !currentUrl.startsWith('/test');
 
   // --- Prevent rendering pages until authorization is known ---
   if (isAuthorized === null) return null;
-  if (!isAuthorized && window.location.pathname !== '/login' && window.location.pathname !== '/') return null;
+  if (!isAuthorized && !publicPaths.includes(window.location.pathname)) return null;
 
   return (
     <div class="app">
@@ -269,6 +261,7 @@ const App = () => {
         <Route path="/profile" component={Profile} />
         <Route path="/charging" component={Charging} />
         <Route path="/login" component={Login} />
+        <Route path="/test" component={Test} />
       </Router>
 
       <Notifications />
