@@ -194,37 +194,6 @@
       });
   });
 
-  // --- CHARGING INFO POLLING ---
-  function updateChargingInfo() {
-    fetch("https://ellioth.othdb.de/get-charging-time.php")
-      .then(res => res.json())
-      .then(data => {
-        if (data.status === "charging") {
-          document.getElementById("charging-time").textContent =
-            `Charging since ${data.since} (${data.amperes}A)`;
-          document.getElementById("nicenessControl").style.display = "block";
-
-          // If niceness not yet loaded, try again when charging is confirmed
-          if (!nicenessPreloaded && !nicenessUserTouched) {
-            preloadNicenessFromServer();
-          }
-        } else {
-          document.getElementById("charging-time").textContent =
-            "Not currently charging.";
-          document.getElementById("nicenessControl").style.display = "none";
-          // Reset preload flags for next session
-          nicenessPreloaded = false;
-          nicenessUserTouched = false;
-        }
-      })
-      .catch(err => {
-        console.error("Charging info error:", err);
-      });
-  }
-
-  // Poll every second to catch cars joining/leaving
-  setInterval(updateChargingInfo, 1000);
-  updateChargingInfo();
 
 
   // === Push Notification Setup ===

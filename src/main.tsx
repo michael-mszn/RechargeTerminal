@@ -19,6 +19,7 @@ import profileIcon from './images/profile.png';
 import micIcon from './images/mic.png';
 /* @ts-ignore */
 import disconnectIcon from './images/disconnect.png';
+import { usePushNotifications } from './hooks/usePush';
 
 let notifyCallback: ((msg: string) => void) | null = null;
 
@@ -148,6 +149,8 @@ const App = () => {
   const AnyLink = Link as any;
 
   const publicPaths = ['/', '/login', '/test'];
+
+  usePushNotifications();
 
   function hasSessionCookie(): boolean {
     return document.cookie.split(';').some(c => c.trim().startsWith('current_qr_code='));
