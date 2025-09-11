@@ -11,12 +11,19 @@ PROJECT_DIR="/home/michael/ellioth"
 BUILD_LOG="$PROJECT_DIR/build.log"
 DB_LOG="$PROJECT_DIR/setup-db.log"
 
+# Path to your repeating script
+EVERY_SECOND_SCRIPT="$PROJECT_DIR/do_every_second.sh"
+
 # -------------------------------
-# Cleanup old processes (optional)
+# Cleanup old processes
 # -------------------------------
 echo "Stopping any stray Node/Vite processes..."
 pkill -f "vite" 2>/dev/null
 pkill -f "node" 2>/dev/null
+
+# Kill any existing instances of do_every_second.sh
+echo "Stopping any existing do_every_second.sh instances..."
+pkill -f "$EVERY_SECOND_SCRIPT" 2>/dev/null
 
 # -------------------------------
 # Go to project directory
@@ -44,6 +51,12 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 echo "✅ Database setup complete"
+
+# -------------------------------
+# Start the repeating script
+# -------------------------------
+echo "Starting do_every_second.sh in background..."
+nohup "$EVERY_SECOND_SCRIPT" > /dev/null 2>&1 &
 
 # -------------------------------
 # Reload Apache
