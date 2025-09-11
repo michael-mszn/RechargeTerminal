@@ -155,7 +155,7 @@ const App = () => {
     const authorized = hasSessionCookie();
     setIsAuthorized(authorized);
 
-    if (!authorized && window.location.pathname !== '/login') {
+    if (!authorized && window.location.pathname !== '/' && window.location.pathname !== '/login') {
       window.location.replace('/login');
     }
   }, []);
@@ -260,7 +260,7 @@ const App = () => {
 
   // --- Prevent rendering pages until authorization is known ---
   if (isAuthorized === null) return null;
-  if (!isAuthorized && window.location.pathname !== '/login') return null;
+  if (!isAuthorized && window.location.pathname !== '/login' && window.location.pathname !== '/') return null;
 
   return (
     <div class="app">

@@ -23,7 +23,6 @@ type SlotStatus = 'empty' | 'charging' | 'auth_required' | 'error' | 'fully_char
 
 export default function Home() {
   const [username, setUsername] = useState<string | null>(null);
-  const [displayName, setDisplayName] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [replyVisible, setReplyVisible] = useState(false);
@@ -32,42 +31,75 @@ export default function Home() {
 
   const [slots, setSlots] = useState<{ slot: number; status: SlotStatus }[]>([]);
 
-  // Poll current user
+  const lastNameRef = useRef<string | null>(null); // last observed name
+  const lastWelcomeRef = useRef<string | null>(null); // last name we sent welcome for
+
+  // Poll current username and trigger welcome message
   useEffect(() => {
-    const checkCurrentUser = async () => {
+    const pollUserAndName = async () => {
       try {
-        const res = await fetch('/api/get-current-username.php');
-        const data = await res.json();
-        setUsername(data.username || null);
+        const userRes = await fetch('/api/get-current-username.php');
+        const userData = await userRes.json();
+        const currentUsername = userData.username || null;
+        setUsername(currentUsername);
+
+        let name = 'Unknown';
+
+        if (currentUsername) {
+          // Only fetch name if a username is present
+          const nameRes = await fetch('/api/get-name.php');
+          const nameData = await nameRes.json();
+          name = nameData.name?.trim() || 'Unknown';
+        }
+
+        // First poll
+        if (lastNameRef.current === null) {
+          lastNameRef.current = name;
+          console.log('[Home.tsx] Initial name detected:', name);
+          if (name !== 'Unknown') {
+            lastWelcomeRef.current = name;
+            console.log('[Home.tsx] Triggering welcome message for initial name:', name);
+            await fetch('/api/welcome-message.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reply: `Welcome, ${name}` }),
+              credentials: 'same-origin',
+            });
+          }
+          return;
+        }
+
+        // Detect name change
+        if (name !== lastNameRef.current) {
+          console.log('[Home.tsx] Name change detected:', lastNameRef.current, '->', name);
+          lastNameRef.current = name;
+
+          if (name === 'Unknown') {
+            // user logged out, reset welcome trigger
+            lastWelcomeRef.current = null;
+          } else if (lastWelcomeRef.current !== name) {
+            // new user logged in
+            lastWelcomeRef.current = name;
+            console.log('[Home.tsx] Triggering welcome message for:', name);
+            await fetch('/api/welcome-message.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reply: `Welcome, ${name}` }),
+              credentials: 'same-origin',
+            });
+          }
+        }
       } catch (err) {
-        console.error('Failed to check user', err);
-        setUsername(null);
+        console.error('Error polling user and name:', err);
       }
     };
-    checkCurrentUser();
-    const interval = setInterval(checkCurrentUser, 1000);
+
+    pollUserAndName();
+    const interval = setInterval(pollUserAndName, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  // Poll displayName
-  useEffect(() => {
-    if (!username) return;
-    const fetchUserData = async () => {
-      try {
-        const nameRes = await fetch('/api/get-name.php');
-        const nameData = await nameRes.json();
-        setDisplayName(nameData.name ?? 'User');
-      } catch (err) {
-        console.error('Error fetching user data:', err);
-        setDisplayName('User');
-      }
-    };
-    fetchUserData();
-    const interval = setInterval(fetchUserData, 1000);
-    return () => clearInterval(interval);
-  }, [username]);
-
-  // Poll for new chat reply and animate
+  // Poll chatGPT reply and animate
   useEffect(() => {
     if (!username) return;
 
@@ -77,12 +109,10 @@ export default function Home() {
         const data = await res.json();
 
         if (data.reply && data.reply.trim() !== '') {
-          // Reset animation
           setAnimatedReply('');
           setReplyVisible(true);
           if (replyTimerRef.current) clearTimeout(replyTimerRef.current);
 
-          // Animate typing effect
           let i = 0;
           const fullText = data.reply;
           const interval = setInterval(() => {
@@ -91,7 +121,6 @@ export default function Home() {
             if (i >= fullText.length) clearInterval(interval);
           }, 15);
 
-          // Hide container after 20s
           replyTimerRef.current = setTimeout(() => {
             setReplyVisible(false);
             setAnimatedReply('');
@@ -124,7 +153,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Poll current QR code every second and render it
+  // Poll QR code
   useEffect(() => {
     const updateQRCode = async () => {
       try {
@@ -191,18 +220,15 @@ export default function Home() {
           </div>
 
           <div className={`qrcode-container qr`}>
-            {!username && <p>Scan this QR code to access recharging:</p>}
+            <p>Scan this QR code to access recharging:</p>
             <canvas ref={canvasRef}></canvas>
-          </div>
-
-          <div className={`welcome ${username ? '' : 'hidden'}`} id="welcome">
-            Welcome, {displayName}
           </div>
 
           <div className="ellioth-position">
             <img src={elliothPng} className="ellioth floating" alt="Ellioth" />
           </div>
-          {/* Reply container */}
+
+          {/* Reply container below Ellioth */}
           <div className={`reply-container ${replyVisible ? '' : 'hidden'}`}>
             <p className="time-element fontstyle-ellioth-name">Ellioth</p>
             <div className="line-position">
