@@ -25,7 +25,6 @@ export function addNotification(msg: string) {
   if (notifyCallback) notifyCallback(msg);
 }
 
-
 async function handleDisconnect() {
   try {
     const res = await fetch('/api/disconnect.php', {
@@ -44,7 +43,119 @@ async function handleDisconnect() {
   }
 }
 
-// Notifications Component
+const PositionOverlay = ({ onCleared }: { onCleared: () => void }) => {
+  const [freePositions, setFreePositions] = useState<number[]>([]);
+  const [selected, setSelected] = useState<string>('');
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Lock scroll while overlay mounted
+  useEffect(() => {
+    document.body.classList.add('no-scroll');
+    return () => {
+      document.body.classList.remove('no-scroll');
+    };
+  }, []);
+
+  // Check if the user already has a position
+  useEffect(() => {
+    let mounted = true;
+
+    fetch('/api/get-current-position.php', { credentials: 'same-origin' })
+      .then(res => res.json())
+      .then(data => {
+        if (!mounted) return;
+        if (data.position) {
+          onCleared();
+        } else {
+          fetchFreePositions();
+        }
+      })
+      .catch(() => {
+        if (!mounted) return;
+        fetchFreePositions();
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+
+    return () => { mounted = false; };
+  }, []);
+
+  const fetchFreePositions = () => {
+    setError('');
+    setLoading(true);
+    fetch('/api/get-free-positions.php', { credentials: 'same-origin' })
+      .then(res => res.json())
+      .then(data => setFreePositions(data.free_positions || []))
+      .catch(() => setError('Error loading positions.'))
+      .finally(() => setLoading(false));
+  };
+
+  const submitPosition = () => {
+    setError('');
+    if (!selected) {
+      setError('Please choose a valid position.');
+      return;
+    }
+
+    fetch('/api/claim-position.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ position: selected }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          onCleared();
+        } else {
+          setError(data.message || 'Could not reserve this position.');
+        }
+      })
+      .catch(() => setError('Error with the request.'));
+  };
+
+  return (
+    <div class="position-overlay-backdrop" role="dialog" aria-modal="true">
+      <div class="position-overlay" aria-live="polite">
+        <h2>Please choose your position</h2>
+
+        {loading ? (
+          <div class="position-loading">Loading positions…</div>
+        ) : (
+          <>
+            <select
+              value={selected}
+              onChange={(e: any) => setSelected(e.target.value)}
+            >
+              <option disabled value="">Choose a free slot</option>
+              {freePositions.map((pos) => (
+                <option key={pos} value={String(pos)}>
+                  Position {pos}
+                </option>
+              ))}
+            </select>
+
+            <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'center' }}>
+              <button onClick={submitPosition} class="primary">
+                Confirm
+              </button>
+              <button onClick={fetchFreePositions} class="secondary">
+                Refresh
+              </button>
+            </div>
+
+            {error && <div class="position-error">{error}</div>}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
 const Notifications = () => {
   const [notifs, setNotifs] = useState<{ id: number; text: string }[]>([]);
 
@@ -80,6 +191,7 @@ const Notifications = () => {
 const App = () => {
   const [currentUrl, setCurrentUrl] = useState('/');
   const [isElliothHeld, setElliothHeld] = useState(false);
+  const [needsPosition, setNeedsPosition] = useState(true);
 
   const AnyLink = Link as any;
 
@@ -101,6 +213,9 @@ const App = () => {
   };
   const handleHoldEnd = () => setElliothHeld(false);
 
+  // show navbar when not root and not login
+  const showNavbar = currentUrl !== '/' && !currentUrl.startsWith('/login');
+
   return (
     <div class="app">
       <Router onChange={(e) => setCurrentUrl(e.url)}>
@@ -110,11 +225,10 @@ const App = () => {
         <Route path="/login" component={Login} />
       </Router>
 
-      {/* Notifications always mounted */}
       <Notifications />
 
       {/* Navbar hidden on root and login pages */}
-      {currentUrl !== '/' && !currentUrl.startsWith('/login') && (
+      {showNavbar && (
         <nav class="navbar">
           {navItems.map((item) => {
             const isActive = item.href === currentUrl;
@@ -190,6 +304,11 @@ const App = () => {
             })}
           </div>
         </>
+      )}
+
+      {/* Position overlay: only show where the navbar exists */}
+      {showNavbar && needsPosition && (
+        <PositionOverlay onCleared={() => setNeedsPosition(false)} />
       )}
     </div>
   );

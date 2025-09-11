@@ -131,7 +131,7 @@
   let isDisconnected = false;
 
   function fetchCurrentPosition() {
-    fetch('https://ellioth.othdb.de/get-current-position.php')
+    fetch('https://ellioth.othdb.de/api/get-current-position.php')
       .then(res => res.json())
       .then(data => {
         if (data.position) {
@@ -157,7 +157,7 @@
   }
 
   function fetchFreePositions() {
-    fetch('https://ellioth.othdb.de/get-free-positions.php')
+    fetch('https://ellioth.othdb.de/api/get-free-positions.php')
       .then(res => res.json())
       .then(data => {
         const select = document.getElementById('positionSelect');
@@ -181,7 +181,7 @@
       return;
     }
 
-    fetch('https://ellioth.othdb.de/claim-position.php', {
+    fetch('https://ellioth.othdb.de/api/claim-position.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ position })

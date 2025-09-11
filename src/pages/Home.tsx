@@ -89,7 +89,7 @@ export default function Home() {
             setAnimatedReply((prev) => prev + fullText[i]);
             i++;
             if (i >= fullText.length) clearInterval(interval);
-          }, 30); // moderate speed
+          }, 15);
 
           // Hide container after 20s
           replyTimerRef.current = setTimeout(() => {
