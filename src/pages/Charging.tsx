@@ -14,7 +14,6 @@ type ParkingStatusResponse = {
 export default function Charging() {
   const [displayName, setDisplayName] = useState("Loading...");
   const [currentAmps, setCurrentAmps] = useState(0);
-  // @ts-ignore
   const [targetAmps, setTargetAmps] = useState(30);
   const [chargingText, setChargingText] = useState("Loading status...");
   const [chargingColor, setChargingColor] = useState("#a8e792");
@@ -35,6 +34,25 @@ export default function Charging() {
       .then(data => setDisplayName(data.name || "No Session Found"))
       .catch(() => setDisplayName("Unknown"));
   }, []);
+
+  // Animation helper for amps
+  const animateValue = (from: number, to: number, duration: number) => {
+    let start: number | null = null;
+    const easeOutQuad = (t: number) => t * (2 - t);
+    const step = (timestamp: number) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const eased = easeOutQuad(progress);
+      const value = Math.floor(from + (to - from) * eased);
+      setCurrentAmps(value);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        setCurrentAmps(to);
+      }
+    };
+    requestAnimationFrame(step);
+  };
 
   // Poll parking slot status from backend every 1 second
   useEffect(() => {
@@ -72,7 +90,10 @@ export default function Charging() {
         }
 
         if (data.amperes !== undefined) {
-          setTargetAmps(data.amperes);
+          if (data.amperes !== targetAmps) {
+            animateValue(targetAmps, data.amperes, 1000);
+            setTargetAmps(data.amperes);
+          }
         }
       } catch (err) {
         setChargingText("Failed to load charging status.");
@@ -84,7 +105,7 @@ export default function Charging() {
     fetchStatus();
     const interval = setInterval(fetchStatus, 1000); // Poll every 1 second
     return () => clearInterval(interval);
-  }, []);
+  }, [targetAmps]);
 
   // Live update of charging time every second
   useEffect(() => {
@@ -100,30 +121,6 @@ export default function Charging() {
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [chargingSince]);
-
-  // Animation helper for amps
-  const animateValue = (from: number, to: number, duration: number) => {
-    let start: number | null = null;
-    const easeOutQuad = (t: number) => t * (2 - t);
-    const step = (timestamp: number) => {
-      if (!start) start = timestamp;
-      const progress = Math.min((timestamp - start) / duration, 1);
-      const eased = easeOutQuad(progress);
-      const value = Math.floor(from + (to - from) * eased);
-      setCurrentAmps(value);
-      if (progress < 1) {
-        requestAnimationFrame(step);
-      } else {
-        setCurrentAmps(to);
-      }
-    };
-    requestAnimationFrame(step);
-  };
-
-  // Play animation on initial load
-  useEffect(() => {
-    animateValue(0, targetAmps, 1000);
-  }, [targetAmps]);
 
   // Blink colon only when timer is active
   useEffect(() => {
