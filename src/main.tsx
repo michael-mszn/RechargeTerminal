@@ -46,10 +46,7 @@ const PositionOverlay = ({ onCleared }: { onCleared: () => void }) => {
         if (data.position) onCleared();
         else fetchFreePositions();
       })
-      .catch(() => {
-        if (!mounted) return;
-        fetchFreePositions();
-      })
+      .catch(() => fetchFreePositions())
       .finally(() => { if (!mounted) return; setLoading(false); });
 
     return () => { mounted = false; };
@@ -67,10 +64,7 @@ const PositionOverlay = ({ onCleared }: { onCleared: () => void }) => {
 
   const submitPosition = () => {
     setError('');
-    if (!selected) {
-      setError('Please choose a valid position.');
-      return;
-    }
+    if (!selected) { setError('Please choose a valid position.'); return; }
 
     fetch('/api/claim-position.php', {
       method: 'POST',
@@ -147,17 +141,30 @@ const App = () => {
   const [isElliothHeld, setElliothHeld] = useState(false);
   const [needsPosition, setNeedsPosition] = useState(true);
   const [isConnected, setIsConnected] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null); // null = loading
   const recognitionRef = useRef<any>(null);
 
   const AnyLink = Link as any;
 
-  // --- Initialize connection status based on get-name.php ---
+  function hasSessionCookie(): boolean {
+    return document.cookie.split(';').some(c => c.trim().startsWith('current_qr_code='));
+  }
+
+  // --- Check authorization based on cookie ---
+  useEffect(() => {
+    const authorized = hasSessionCookie();
+    setIsAuthorized(authorized);
+
+    if (!authorized && window.location.pathname !== '/login') {
+      window.location.replace('/login');
+    }
+  }, []);
+
+  // --- Initialize connection status (separate from isAuthorized) ---
   useEffect(() => {
     fetch("https://ellioth.othdb.de/api/get-name.php")
       .then(res => res.json())
-      .then(data => {
-        setIsConnected(data.name && data.name !== "No Session Found");
-      })
+      .then(data => setIsConnected(data.name && data.name !== "No Session Found"))
       .catch(() => setIsConnected(false));
   }, []);
 
@@ -192,23 +199,18 @@ const App = () => {
 
     recognition.onresult = function(event: any) {
       const transcript = event.results[0][0].transcript;
-      console.log('Recognized speech:', transcript);
-
       fetch("/api/chatgpt.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: transcript }),
-      })
-        .then(async res => {
-          const text = await res.text();
-          try { console.log("API JSON response:", JSON.parse(text)); }
-          catch { console.warn("Non-JSON response from server:", text); }
-        })
-        .catch(err => console.error("Error sending to API:", err));
+      }).then(async res => {
+        const text = await res.text();
+        try { console.log("API JSON response:", JSON.parse(text)); }
+        catch { console.warn("Non-JSON response from server:", text); }
+      }).catch(err => console.error("Error sending to API:", err));
     };
 
     recognition.onerror = function(event: any) { console.error('Speech recognition error:', event.error); };
-
     recognitionRef.current = recognition;
     recognition.start();
   };
@@ -249,13 +251,16 @@ const App = () => {
       } else {
         addNotification('You are already disconnected.');
       }
-    } catch (err) {
-      console.error('Disconnect error:', err);
+    } catch {
       addNotification('You are already disconnected.');
     }
   };
 
   const showNavbar = currentUrl !== '/' && !currentUrl.startsWith('/login');
+
+  // --- Prevent rendering pages until authorization is known ---
+  if (isAuthorized === null) return null;
+  if (!isAuthorized && window.location.pathname !== '/login') return null;
 
   return (
     <div class="app">
