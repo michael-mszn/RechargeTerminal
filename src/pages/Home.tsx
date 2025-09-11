@@ -190,7 +190,7 @@ export default function Home() {
             })}
           </div>
 
-          <div className={`qrcode-container ${username ? 'qr-moved' : 'qr'}`}>
+          <div className={`qrcode-container qr`}>
             {!username && <p>Scan this QR code to access recharging:</p>}
             <canvas ref={canvasRef}></canvas>
           </div>
@@ -199,11 +199,11 @@ export default function Home() {
             Welcome, {displayName}
           </div>
 
+          <div className="ellioth-position">
+            <img src={elliothPng} className="ellioth floating" alt="Ellioth" />
+          </div>
           {/* Reply container */}
           <div className={`reply-container ${replyVisible ? '' : 'hidden'}`}>
-            <div className="ellioth-position">
-              <img src={elliothPng} className="ellioth floating" alt="Ellioth" />
-            </div>
             <p className="time-element fontstyle-ellioth-name">Ellioth</p>
             <div className="line-position">
               <img src={linePng} className="line" />
