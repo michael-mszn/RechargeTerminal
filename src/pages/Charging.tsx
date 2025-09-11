@@ -1,7 +1,14 @@
 import { useState, useEffect, useRef } from 'preact/hooks';
 import '../css/Charging.css';
 // @ts-ignore
-import carImage from '../images/car-home-menu.png';
+import carCharging from '../images/car-home-menu-charging.png';
+// @ts-ignore
+import carAuthRequired from '../images/car-home-menu-auth-required.png';
+// @ts-ignore
+import carFullyCharged from '../images/car-home-menu-fully-charged.png';
+// @ts-ignore
+import carError from '../images/car-home-menu-error.png';
+
 import { addNotification } from '../main';
 
 type ParkingStatusResponse = {
@@ -24,15 +31,17 @@ export default function Charging() {
   const [currentDigit, setCurrentDigit] = useState<number | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
   const [overlayMarginTop, setOverlayMarginTop] = useState('15vh');
+  const [carImage, setCarImage] = useState(carCharging);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Refs to avoid stale closure in intervals
+  // Refs to avoid stale closures
   const currentAmpsRef = useRef(currentAmps);
   const targetAmpsRef = useRef(targetAmps);
   const chargingSinceRef = useRef<number | null>(chargingSince);
   const wasVisibleRef = useRef(false);
 
-  // Fetch display name from API
+  // Fetch display name
   useEffect(() => {
     fetch("https://ellioth.othdb.de/api/get-name.php")
       .then(res => res.json())
@@ -63,21 +72,25 @@ export default function Charging() {
     requestAnimationFrame(step);
   };
 
-  // Poll parking slot status every second
+  // Poll status
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch("https://ellioth.othdb.de/api/get-current-users-car-status.php", {
-          credentials: 'include'
-        });
+        const res = await fetch("https://ellioth.othdb.de/api/get-current-users-car-status.php", { credentials: 'include' });
         const data: ParkingStatusResponse = await res.json();
         console.log("[get-current-users-car-status] server response:", data);
 
-        if (data.status === "charging" && data.since) {
-          // Parse server datetime (e.g., "2025-09-11 06:07:36")
-          const start = new Date(data.since.replace(" ", "T") + "Z").getTime();
-          console.log("[charging] parsed start:", new Date(start).toISOString());
+        // Update car image according to status
+        switch (data.status) {
+          case "charging": setCarImage(carCharging); break;
+          case "auth_required": setCarImage(carAuthRequired); break;
+          case "fully_charged": setCarImage(carFullyCharged); break;
+          case "error": setCarImage(carError); break;
+          default: setCarImage(carError); break;
+        }
 
+        if (data.status === "charging" && data.since) {
+          const start = new Date(data.since.replace(" ", "T") + "Z").getTime();
           if (chargingSinceRef.current == null) {
             setChargingSince(start);
             chargingSinceRef.current = start;
@@ -94,7 +107,6 @@ export default function Charging() {
             setTargetAmps(data.amperes);
           }
         } else {
-          // Not charging
           setChargingSince(null);
           chargingSinceRef.current = null;
           wasVisibleRef.current = false;
@@ -130,10 +142,9 @@ export default function Charging() {
     return () => clearInterval(interval);
   }, []);
 
-  // Update charging time live
+  // Live update charging time
   useEffect(() => {
     if (!chargingSince) return;
-
     const tick = () => {
       const now = Date.now();
       const elapsed = Math.floor((now - chargingSince) / 1000);
@@ -141,23 +152,19 @@ export default function Charging() {
       const minutes = Math.floor((elapsed % 3600) / 60);
       setChargingText(`Your car is charging since ${hours}h${minutes}min.`);
     };
-
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
   }, [chargingSince]);
 
-  // Timer blink colon
+  // Timer colon blink
   useEffect(() => {
-    if (!timerActive) {
-      setShowColon(true);
-      return;
-    }
+    if (!timerActive) { setShowColon(true); return; }
     const interval = setInterval(() => setShowColon(prev => !prev), 1000);
     return () => clearInterval(interval);
   }, [timerActive]);
 
-  // Overlay positioning
+  // Overlay scroll
   useEffect(() => {
     if (showOverlay) {
       document.body.style.overflow = 'hidden';
@@ -165,30 +172,27 @@ export default function Charging() {
       window.addEventListener('resize', handleResize);
       handleResize();
       return () => window.removeEventListener('resize', handleResize);
-    } else {
-      document.body.style.overflow = '';
-    }
+    } else document.body.style.overflow = '';
   }, [showOverlay]);
 
   const handleApplyCancel = () => {
     if (!timerActive) {
-      const hours = parseInt(timerInput[0] + timerInput[1], 10);
-      const minutes = parseInt(timerInput[2] + timerInput[3], 10);
-      if (hours === 0 && minutes === 0) {
+      const hours = parseInt(timerInput[0]+timerInput[1],10);
+      const minutes = parseInt(timerInput[2]+timerInput[3],10);
+      if(hours===0 && minutes===0){
         addNotification('You need to enter a charging time of at least 1 minute.');
         return;
       }
       setTimerActive(true);
     } else setTimerActive(false);
-
     setCurrentDigit(null);
     setShowOverlay(false);
   };
 
   const handleInputChange = (e: any) => {
-    if (timerActive) return;
-    const value = (e.target as HTMLInputElement).value.replace(/\D/g, '');
-    if (!value) return;
+    if(timerActive) return;
+    const value = (e.target as HTMLInputElement).value.replace(/\D/g,'');
+    if(!value) return;
 
     setTimerInput(prev => {
       const newArr = [...prev];
@@ -201,19 +205,16 @@ export default function Charging() {
       const minutes = parseInt(newArr[2]+newArr[3],10);
       const clampedHours = Math.min(Math.max(hours,0),23).toString().padStart(2,'0');
       const clampedMinutes = Math.min(Math.max(minutes,0),59).toString().padStart(2,'0');
-      newArr[0] = clampedHours[0];
-      newArr[1] = clampedHours[1];
-      newArr[2] = clampedMinutes[0];
-      newArr[3] = clampedMinutes[1];
+      newArr[0]=clampedHours[0]; newArr[1]=clampedHours[1]; newArr[2]=clampedMinutes[0]; newArr[3]=clampedMinutes[1];
       setCurrentDigit(index%4);
       return newArr;
     });
 
-    (e.target as HTMLInputElement).value = '';
+    (e.target as HTMLInputElement).value='';
   };
 
   const handleTimerBoxClick = () => {
-    if (!timerActive) {
+    if(!timerActive){
       setShowOverlay(true);
       setCurrentDigit(0);
       inputRef.current?.focus();
@@ -222,7 +223,7 @@ export default function Charging() {
 
   const renderTimerDigits = () => {
     const digits = timerInput.map((d,i) => (
-      <span key={i} style={{ color: currentDigit===i && !timerActive ? '#ff3b92' : '#a8e792' }}>{d}</span>
+      <span key={i} style={{color: currentDigit===i && !timerActive ? '#ff3b92':'#a8e792'}}>{d}</span>
     ));
     return <>
       {digits[0]}{digits[1]}<span className="blink-colon">{showColon?':':' '}</span>{digits[2]}{digits[3]}&nbsp;
@@ -251,15 +252,13 @@ export default function Charging() {
       <p className="charging-status" style={{color: chargingColor}}>{chargingText}</p>
 
       <div className="car-image-wrapper">
-        <img src={carImage} alt="Car charging" className="car-image"/>
+        <img src={carImage} alt="Car status" className="car-image"/>
         {chargingSince && <span className="current-overlay">{currentAmps}A</span>}
       </div>
 
       {!timerActive ? <div className="optional-timer">Set optional charge timer</div> : <div className="optional-timer">Charging ends in</div>}
 
-      <div className="timer-box" onClick={handleTimerBoxClick}>
-        {renderTimerDigits()}
-      </div>
+      <div className="timer-box" onClick={handleTimerBoxClick}>{renderTimerDigits()}</div>
 
       <input type="number" inputMode="numeric" ref={inputRef} onInput={handleInputChange} value="" style={{position:'absolute',opacity:0,width:'1px',height:'1px',border:'none',padding:0,margin:0}}/>
 
