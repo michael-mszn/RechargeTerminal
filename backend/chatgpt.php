@@ -9,16 +9,23 @@ header("Content-Type: application/json");
 require_once 'config.php';
 require_once 'require-valid-position.php';
 
+const FALLBACK_REPLY = "The DeepSeek API appears to have issues, so sadly, I can't reply to you right now :(";
+
 try {
     // === Read input ===
     $input = json_decode(file_get_contents('php://input'), true);
     $prompt = trim($input['prompt'] ?? '');
 
     if (!$prompt) {
-        http_response_code(400);
         echo json_encode(['error' => 'No prompt provided.']);
         exit;
     }
+
+    // === Initialize DB first ===
+    $db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $db->exec('PRAGMA busy_timeout = 1000');
+    $db->exec('PRAGMA journal_mode = WAL');
 
     // === Prepare DeepSeek API request ===
     $postData = [
@@ -32,18 +39,11 @@ try {
     $ch = curl_init('https://deepseek.othdb.de/api/chat');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json'
-    ]);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
-
-    // Basic Auth
     curl_setopt($ch, CURLOPT_USERPWD, DEEPSEEK_USERNAME . ':' . DEEPSEEK_PASSWORD);
-
-    // Timeouts to prevent hanging
-    curl_setopt($ch, CURLOPT_TIMEOUT, 120);         // total execution timeout
-    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);  // connection timeout
-
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 1);
     curl_setopt($ch, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
 
     $response = curl_exec($ch);
@@ -61,19 +61,12 @@ try {
 
     $responseData = json_decode($response, true);
 
-    // Parse reply (OpenAI-like or fallback)
+    // Parse reply
     $reply = $responseData['choices'][0]['message']['content']
           ?? $responseData['reply']
-          ?? 'No response from model.';
+          ?? FALLBACK_REPLY;
 
-    // === Save to SQLite DB ===
-    $db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // Avoid lock errors
-    $db->exec('PRAGMA busy_timeout = 5000');
-    $db->exec('PRAGMA journal_mode = WAL');
-
+    // === Save reply to DB ===
     $stmt = $db->prepare("
         INSERT INTO key_value (key, value)
         VALUES ('chatgpt_reply', :reply)
@@ -84,7 +77,26 @@ try {
     echo json_encode(['status' => 'ok']);
 
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
-    exit;
+    // If anything fails, save fallback reply
+    try {
+        if (!isset($db)) {
+            $db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
+            $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $db->exec('PRAGMA busy_timeout = 1000');
+            $db->exec('PRAGMA journal_mode = WAL');
+        }
+
+        $stmt = $db->prepare("
+            INSERT INTO key_value (key, value)
+            VALUES ('chatgpt_reply', :reply)
+            ON CONFLICT(key) DO UPDATE SET value = :reply
+        ");
+        $stmt->execute([':reply' => FALLBACK_REPLY]);
+    } catch (Exception $inner) {
+        // Last resort: log error to file
+        file_put_contents(__DIR__ . '/chatgpt-error.log', $inner->getMessage(), FILE_APPEND);
+    }
+
+    // Return normal JSON, do NOT break frontend
+    echo json_encode(['status' => 'ok']);
 }

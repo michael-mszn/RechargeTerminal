@@ -1,7 +1,7 @@
 import { render } from 'preact';
 import { Router, Route } from 'preact-router';
 import { Link } from 'preact-router';
-import { useState, useEffect } from 'preact/hooks';
+import { useState, useEffect, useRef } from 'preact/hooks';
 
 import Home from './pages/Home';
 import Profile from './pages/Profile';
@@ -155,7 +155,6 @@ const PositionOverlay = ({ onCleared }: { onCleared: () => void }) => {
   );
 };
 
-
 const Notifications = () => {
   const [notifs, setNotifs] = useState<{ id: number; text: string }[]>([]);
 
@@ -192,6 +191,7 @@ const App = () => {
   const [currentUrl, setCurrentUrl] = useState('/');
   const [isElliothHeld, setElliothHeld] = useState(false);
   const [needsPosition, setNeedsPosition] = useState(true);
+  const recognitionRef = useRef<any>(null);
 
   const AnyLink = Link as any;
 
@@ -207,11 +207,66 @@ const App = () => {
     { href: '/charging', label: 'HOME', icon: homeIcon },
   ];
 
+  const startSpeechRecognition = () => {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      alert('Speech recognition is not supported.');
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = function (event: any) {
+      const transcript = event.results[0][0].transcript;
+      console.log('Recognized speech:', transcript);
+
+      fetch("https://ellioth.othdb.de/api/chatgpt.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: transcript }),
+      })
+        .then(async (res) => {
+          const text = await res.text();
+          try {
+            const data = JSON.parse(text);
+            console.log("API JSON response:", data);
+          } catch (err) {
+            console.warn("Non-JSON response from server:", text);
+          }
+        })
+        .catch((err) => {
+          console.error("Error sending to API:", err);
+        });
+    };
+
+    recognition.onerror = function (event: any) {
+      console.error('Speech recognition error:', event.error);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopSpeechRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+  };
+
   const handleHoldStart = (e: any) => {
     e.preventDefault();
     setElliothHeld(true);
+    startSpeechRecognition();
   };
-  const handleHoldEnd = () => setElliothHeld(false);
+
+  const handleHoldEnd = () => {
+    setElliothHeld(false);
+    stopSpeechRecognition();
+  };
 
   // show navbar when not root and not login
   const showNavbar = currentUrl !== '/' && !currentUrl.startsWith('/login');
