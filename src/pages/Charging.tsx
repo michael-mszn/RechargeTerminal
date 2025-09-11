@@ -4,11 +4,22 @@ import '../css/Charging.css';
 import carImage from '../images/car-home-menu.png';
 import { addNotification } from '../main';
 
+type ParkingStatusResponse = {
+  status: string;
+  slot_id?: number;
+  since?: string;
+  amperes?: number;
+};
+
 export default function Charging() {
   const [displayName, setDisplayName] = useState("Loading...");
   const [currentAmps, setCurrentAmps] = useState(0);
   // @ts-ignore
-  const [targetAmps, setTargetAmps] = useState(30); // dummy initial amps value
+  const [targetAmps, setTargetAmps] = useState(30);
+  const [chargingText, setChargingText] = useState("Loading status...");
+  const [chargingColor, setChargingColor] = useState("#a8e792");
+  const [chargingSince, setChargingSince] = useState<number | null>(null);
+
   const [timerActive, setTimerActive] = useState(false);
   const [showColon, setShowColon] = useState(true);
   const [timerInput, setTimerInput] = useState(['0', '0', '0', '0']);
@@ -25,26 +36,87 @@ export default function Charging() {
       .catch(() => setDisplayName("Unknown"));
   }, []);
 
+  // Poll parking slot status from backend every 1 second
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch("https://ellioth.othdb.de/api/get-current-users-car-status.php", {
+          credentials: 'include'
+        });
+        const data: ParkingStatusResponse = await res.json();
+
+        switch (data.status) {
+          case "charging":
+            if (data.since) {
+              const start = new Date(data.since).getTime();
+              setChargingSince(start);
+              setChargingColor("#a8e792");
+            }
+            break;
+          case "fully_charged":
+            setChargingText("Your car finished charging.");
+            setChargingColor("#7eaf8b");
+            setChargingSince(null);
+            break;
+          case "auth_required":
+            setChargingText("Your car requires authentication before it can start charging.");
+            setChargingColor("#66a9f4");
+            setChargingSince(null);
+            break;
+          case "error":
+          default:
+            setChargingText("The terminal ran into an issue with your car. Did you run out of balance?");
+            setChargingColor("#f91853");
+            setChargingSince(null);
+            break;
+        }
+
+        if (data.amperes !== undefined) {
+          setTargetAmps(data.amperes);
+        }
+      } catch (err) {
+        setChargingText("Failed to load charging status.");
+        setChargingColor("#f91853");
+        setChargingSince(null);
+      }
+    };
+
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 1000); // Poll every 1 second
+    return () => clearInterval(interval);
+  }, []);
+
+  // Live update of charging time every second
+  useEffect(() => {
+    if (!chargingSince) return;
+    const tick = () => {
+      const now = Date.now();
+      const elapsed = Math.floor((now - chargingSince) / 1000);
+      const hours = Math.floor(elapsed / 3600);
+      const minutes = Math.floor((elapsed % 3600) / 60);
+      setChargingText(`Your car is charging since ${hours}h${minutes}min.`);
+    };
+    tick(); // initial update
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [chargingSince]);
+
   // Animation helper for amps
   const animateValue = (from: number, to: number, duration: number) => {
     let start: number | null = null;
-
     const easeOutQuad = (t: number) => t * (2 - t);
-
     const step = (timestamp: number) => {
       if (!start) start = timestamp;
       const progress = Math.min((timestamp - start) / duration, 1);
       const eased = easeOutQuad(progress);
       const value = Math.floor(from + (to - from) * eased);
       setCurrentAmps(value);
-
       if (progress < 1) {
         requestAnimationFrame(step);
       } else {
         setCurrentAmps(to);
       }
     };
-
     requestAnimationFrame(step);
   };
 
@@ -79,7 +151,6 @@ export default function Charging() {
     }
   }, [showOverlay]);
 
-  // Apply/Cancel with validation
   const handleApplyCancel = () => {
     if (!timerActive) {
       const hours = parseInt(timerInput[0] + timerInput[1], 10);
@@ -110,18 +181,16 @@ export default function Charging() {
         newArr[index] = d;
         index = (index + 1) % 4;
       });
-      const hours = parseInt(newArr[0] + newArr[1], 10);
-      const minutes = parseInt(newArr[2] + newArr[3], 10);
-      const clampedHours = Math.min(Math.max(hours, 0), 23)
+      const hours = Math.min(Math.max(parseInt(newArr[0] + newArr[1], 10), 0), 23)
         .toString()
         .padStart(2, '0');
-      const clampedMinutes = Math.min(Math.max(minutes, 0), 59)
+      const minutes = Math.min(Math.max(parseInt(newArr[2] + newArr[3], 10), 0), 59)
         .toString()
         .padStart(2, '0');
-      newArr[0] = clampedHours[0];
-      newArr[1] = clampedHours[1];
-      newArr[2] = clampedMinutes[0];
-      newArr[3] = clampedMinutes[1];
+      newArr[0] = hours[0];
+      newArr[1] = hours[1];
+      newArr[2] = minutes[0];
+      newArr[3] = minutes[1];
       setCurrentDigit(index % 4);
       return newArr;
     });
@@ -177,9 +246,8 @@ export default function Charging() {
   return (
     <div className="charging-page">
       <h2 className="greeting">Hello, {displayName}</h2>
-      <p className="charging-status">
-        Your car is charging since 2h34min. lore ipsum dolor sit lore ipsum
-        dolor sitlore ipsum dolor sitlore ipsum dolor sit
+      <p className="charging-status" style={{ color: chargingColor }}>
+        {chargingText}
       </p>
 
       <div className="car-image-wrapper">

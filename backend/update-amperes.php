@@ -1,13 +1,6 @@
 <?php
 require_once __DIR__ . '/config.php';
 
-define('LOG_FILE', __DIR__ . '/amperes.log');
-
-function logMessage(string $message): void {
-    $timestamp = date('[Y-m-d H:i:s]');
-    file_put_contents(LOG_FILE, "$timestamp $message\n", FILE_APPEND);
-}
-
 function recalculateAmperes(PDO $pdo, int $slotId): void {
     $groupStart = (floor(($slotId - 1) / 4) * 4) + 1;
     $groupEnd = $groupStart + 3;
@@ -21,8 +14,6 @@ function recalculateAmperes(PDO $pdo, int $slotId): void {
     $stmt->execute([':start' => $groupStart, ':end' => $groupEnd]);
     $chargingSlots = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    logMessage("Charging slots in group: " . print_r($chargingSlots, true));
-
     $chargingCount = count($chargingSlots);
     if ($chargingCount === 0) {
         $stmt = $pdo->prepare("
@@ -31,7 +22,6 @@ function recalculateAmperes(PDO $pdo, int $slotId): void {
             WHERE slot_id BETWEEN :start AND :end
         ");
         $stmt->execute([':start' => $groupStart, ':end' => $groupEnd]);
-        logMessage("No charging slots. Resetting amperes to 0 for slots $groupStart-$groupEnd");
         return;
     }
 
@@ -90,12 +80,9 @@ function recalculateAmperes(PDO $pdo, int $slotId): void {
         }
     }
 
-    // Step 5: update DB and log
+    // Step 5: update DB
     $updateStmt = $pdo->prepare("UPDATE parking_slots SET amperes = :amp WHERE slot_id = :slot_id");
     foreach ($roundedAmps as $slotId => $amp) {
         $updateStmt->execute([':amp' => $amp, ':slot_id' => $slotId]);
-        $niceness = $chargingSlots[array_search($slotId, array_column($chargingSlots, 'slot_id'))]['niceness'];
-        logMessage("Slot $slotId -> Calculated Amperes: $amp (Niceness: $niceness)");
-        logMessage("Executing query: UPDATE parking_slots SET amperes = $amp WHERE slot_id = $slotId");
     }
 }

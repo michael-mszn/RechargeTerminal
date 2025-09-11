@@ -127,29 +127,6 @@
 
 
 <script>
-  let isValidated = false;
-  let isDisconnected = false;
-
-
-  function notifyIfNotReady() {
-    const resultDiv = document.getElementById("result");
-    if (isDisconnected) {
-      resultDiv.textContent = "Sie sind getrennt. Bitte verbinden Sie sich erneut.";
-      return true;
-    }
-    if (!isValidated) {
-      resultDiv.textContent = "Bitte wählen Sie zuerst Ihre Position, um fortzufahren.";
-      return true;
-    }
-    return false;
-  }
-
-
-  function sendPrompt() {
-    if (notifyIfNotReady()) return;
-
-    const prompt = document.getElementById("promptInput").value.trim();
-    if (!prompt) return;
 
 
   // --- PRELOAD NICENESS FROM SERVER ON PAGE LOAD ---
