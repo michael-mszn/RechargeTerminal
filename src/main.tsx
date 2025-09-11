@@ -25,39 +25,17 @@ export function addNotification(msg: string) {
   if (notifyCallback) notifyCallback(msg);
 }
 
-async function handleDisconnect() {
-  try {
-    const res = await fetch('/api/disconnect.php', {
-      method: 'POST',
-      credentials: 'same-origin',
-    });
-
-    if (res.ok) {
-      addNotification('Disconnected. Scan the QR code again to access the terminal.');
-    } else {
-      addNotification('Error: You need a connection to the terminal for this action.');
-    }
-  } catch (err) {
-    console.error('Disconnect error:', err);
-    addNotification('Error: You need a connection to the terminal for this action.');
-  }
-}
-
 const PositionOverlay = ({ onCleared }: { onCleared: () => void }) => {
   const [freePositions, setFreePositions] = useState<number[]>([]);
   const [selected, setSelected] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Lock scroll while overlay mounted
   useEffect(() => {
     document.body.classList.add('no-scroll');
-    return () => {
-      document.body.classList.remove('no-scroll');
-    };
+    return () => document.body.classList.remove('no-scroll');
   }, []);
 
-  // Check if the user already has a position
   useEffect(() => {
     let mounted = true;
 
@@ -65,20 +43,14 @@ const PositionOverlay = ({ onCleared }: { onCleared: () => void }) => {
       .then(res => res.json())
       .then(data => {
         if (!mounted) return;
-        if (data.position) {
-          onCleared();
-        } else {
-          fetchFreePositions();
-        }
+        if (data.position) onCleared();
+        else fetchFreePositions();
       })
       .catch(() => {
         if (!mounted) return;
         fetchFreePositions();
       })
-      .finally(() => {
-        if (!mounted) return;
-        setLoading(false);
-      });
+      .finally(() => { if (!mounted) return; setLoading(false); });
 
     return () => { mounted = false; };
   }, []);
@@ -108,11 +80,8 @@ const PositionOverlay = ({ onCleared }: { onCleared: () => void }) => {
     })
       .then(res => res.json())
       .then(data => {
-        if (data.status === 'ok') {
-          onCleared();
-        } else {
-          setError(data.message || 'Could not reserve this position.');
-        }
+        if (data.status === 'ok') onCleared();
+        else setError(data.message || 'Could not reserve this position.');
       })
       .catch(() => setError('Error with the request.'));
   };
@@ -121,30 +90,20 @@ const PositionOverlay = ({ onCleared }: { onCleared: () => void }) => {
     <div class="position-overlay-backdrop" role="dialog" aria-modal="true">
       <div class="position-overlay" aria-live="polite">
         <h2>Please choose your position</h2>
-
         {loading ? (
           <div class="position-loading">Loading positions…</div>
         ) : (
           <>
-            <select
-              value={selected}
-              onChange={(e: any) => setSelected(e.target.value)}
-            >
+            <select value={selected} onChange={(e: any) => setSelected(e.target.value)}>
               <option disabled value="">Choose a free slot</option>
-              {freePositions.map((pos) => (
-                <option key={pos} value={String(pos)}>
-                  Position {pos}
-                </option>
+              {freePositions.map(pos => (
+                <option key={pos} value={String(pos)}>Position {pos}</option>
               ))}
             </select>
 
             <div style={{ display: 'flex', gap: '8px', width: '100%', justifyContent: 'center' }}>
-              <button onClick={submitPosition} class="primary">
-                Confirm
-              </button>
-              <button onClick={fetchFreePositions} class="secondary">
-                Refresh
-              </button>
+              <button onClick={submitPosition} class="primary">Confirm</button>
+              <button onClick={fetchFreePositions} class="secondary">Refresh</button>
             </div>
 
             {error && <div class="position-error">{error}</div>}
@@ -161,24 +120,20 @@ const Notifications = () => {
   useEffect(() => {
     notifyCallback = (msg: string) => {
       const id = Date.now();
-      setNotifs((prev) => [...prev, { id, text: msg }]);
-      setTimeout(() => setNotifs((prev) => prev.filter((n) => n.id !== id)), 5000);
+      setNotifs(prev => [...prev, { id, text: msg }]);
+      setTimeout(() => setNotifs(prev => prev.filter(n => n.id !== id)), 5000);
     };
-    return () => {
-      notifyCallback = null;
-    };
+    return () => { notifyCallback = null; };
   }, []);
 
   return (
     <div class="notifications-container">
-      {notifs.map((n) => (
+      {notifs.map(n => (
         <div key={n.id} class="notification">
           <button
             class="notif-close"
-            onClick={() => setNotifs((prev) => prev.filter((m) => m.id !== n.id))}
-          >
-            ×
-          </button>
+            onClick={() => setNotifs(prev => prev.filter(m => m.id !== n.id))}
+          >×</button>
           <span class="notif-text">{n.text}</span>
           <div class="notif-progress"></div>
         </div>
@@ -191,9 +146,20 @@ const App = () => {
   const [currentUrl, setCurrentUrl] = useState('/');
   const [isElliothHeld, setElliothHeld] = useState(false);
   const [needsPosition, setNeedsPosition] = useState(true);
+  const [isConnected, setIsConnected] = useState(true);
   const recognitionRef = useRef<any>(null);
 
   const AnyLink = Link as any;
+
+  // --- Initialize connection status based on get-name.php ---
+  useEffect(() => {
+    fetch("https://ellioth.othdb.de/api/get-name.php")
+      .then(res => res.json())
+      .then(data => {
+        setIsConnected(data.name && data.name !== "No Session Found");
+      })
+      .catch(() => setIsConnected(false));
+  }, []);
 
   useEffect(() => {
     if (isElliothHeld) document.body.classList.add('no-scroll');
@@ -208,6 +174,11 @@ const App = () => {
   ];
 
   const startSpeechRecognition = () => {
+    if (!isConnected) {
+      addNotification("You need to be connected to use Ellioth.");
+      return;
+    }
+
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       alert('Speech recognition is not supported.');
       return;
@@ -219,32 +190,24 @@ const App = () => {
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
-    recognition.onresult = function (event: any) {
+    recognition.onresult = function(event: any) {
       const transcript = event.results[0][0].transcript;
       console.log('Recognized speech:', transcript);
 
-      fetch("https://ellioth.othdb.de/api/chatgpt.php", {
+      fetch("/api/chatgpt.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: transcript }),
       })
-        .then(async (res) => {
+        .then(async res => {
           const text = await res.text();
-          try {
-            const data = JSON.parse(text);
-            console.log("API JSON response:", data);
-          } catch (err) {
-            console.warn("Non-JSON response from server:", text);
-          }
+          try { console.log("API JSON response:", JSON.parse(text)); }
+          catch { console.warn("Non-JSON response from server:", text); }
         })
-        .catch((err) => {
-          console.error("Error sending to API:", err);
-        });
+        .catch(err => console.error("Error sending to API:", err));
     };
 
-    recognition.onerror = function (event: any) {
-      console.error('Speech recognition error:', event.error);
-    };
+    recognition.onerror = function(event: any) { console.error('Speech recognition error:', event.error); };
 
     recognitionRef.current = recognition;
     recognition.start();
@@ -259,6 +222,10 @@ const App = () => {
 
   const handleHoldStart = (e: any) => {
     e.preventDefault();
+    if (!isConnected) {
+      addNotification("You need to be connected to use Ellioth.");
+      return;
+    }
     setElliothHeld(true);
     startSpeechRecognition();
   };
@@ -268,12 +235,31 @@ const App = () => {
     stopSpeechRecognition();
   };
 
-  // show navbar when not root and not login
+  const handleDisconnect = async () => {
+    if (!isConnected) {
+      addNotification("You are already disconnected.");
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/disconnect.php', { method: 'POST', credentials: 'same-origin' });
+      if (res.ok) {
+        setIsConnected(false);
+        addNotification('Disconnected. Scan the QR code again to access the terminal.');
+      } else {
+        addNotification('You are already disconnected.');
+      }
+    } catch (err) {
+      console.error('Disconnect error:', err);
+      addNotification('You are already disconnected.');
+    }
+  };
+
   const showNavbar = currentUrl !== '/' && !currentUrl.startsWith('/login');
 
   return (
     <div class="app">
-      <Router onChange={(e) => setCurrentUrl(e.url)}>
+      <Router onChange={e => setCurrentUrl(e.url)}>
         <Route path="/" component={Home} />
         <Route path="/profile" component={Profile} />
         <Route path="/charging" component={Charging} />
@@ -282,10 +268,9 @@ const App = () => {
 
       <Notifications />
 
-      {/* Navbar hidden on root and login pages */}
       {showNavbar && (
         <nav class="navbar">
-          {navItems.map((item) => {
+          {navItems.map(item => {
             const isActive = item.href === currentUrl;
             const isHeld = item.isEllioth && isElliothHeld;
 
@@ -299,6 +284,7 @@ const App = () => {
                   onMouseLeave={handleHoldEnd}
                   onTouchStart={handleHoldStart}
                   onTouchEnd={handleHoldEnd}
+                  style={{ pointerEvents: isConnected ? 'auto' : 'none', opacity: isConnected ? 1 : 0.5 }}
                 >
                   <img src={item.icon} class="nav-icon" alt={item.label} />
                   <span>{item.label}</span>
@@ -308,11 +294,7 @@ const App = () => {
 
             if (item.label === 'DISCONNECT') {
               return (
-                <div
-                  key={item.label}
-                  class="nav-button disconnect-btn"
-                  onClick={handleDisconnect}
-                >
+                <div key={item.label} class="nav-button disconnect-btn" onClick={handleDisconnect}>
                   <img src={item.icon} class="nav-icon" alt={item.label} />
                   <span>{item.label}</span>
                 </div>
@@ -320,11 +302,7 @@ const App = () => {
             }
 
             return (
-              <AnyLink
-                key={item.href}
-                href={item.href}
-                class={`nav-button ${isActive ? 'active' : ''}`}
-              >
+              <AnyLink key={item.href} href={item.href} class={`nav-button ${isActive ? 'active' : ''}`}>
                 <img src={item.icon} class="nav-icon" alt={item.label} />
                 <span>{item.label}</span>
               </AnyLink>
@@ -333,7 +311,6 @@ const App = () => {
         </nav>
       )}
 
-      {/* Ellioth overlay */}
       {isElliothHeld && (
         <>
           <div class="page-dim"></div>
@@ -361,7 +338,6 @@ const App = () => {
         </>
       )}
 
-      {/* Position overlay: only show where the navbar exists */}
       {showNavbar && needsPosition && (
         <PositionOverlay onCleared={() => setNeedsPosition(false)} />
       )}

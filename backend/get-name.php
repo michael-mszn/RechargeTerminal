@@ -1,5 +1,5 @@
 <?php
-require_once 'auto-disconnect.php';
+//require_once 'auto-disconnect.php';
 
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");

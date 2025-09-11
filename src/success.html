@@ -151,26 +151,6 @@
     const prompt = document.getElementById("promptInput").value.trim();
     if (!prompt) return;
 
-    fetch("https://ellioth.othdb.de/chatgpt.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    })
-      .then(res => res.text())
-      .then(text => {
-        try {
-          const data = JSON.parse(text);
-          document.getElementById("result").textContent =
-            data.error ? `Fehler: ${data.error}` : "Erfolgreich gesendet.";
-        } catch (e) {
-          document.getElementById("result").textContent = `Ungültige Antwort: ${text}`;
-        }
-      })
-      .catch(err => {
-        document.getElementById("result").textContent = `Fehler: ${err.message}`;
-      });
-  }
-
 
   // --- PRELOAD NICENESS FROM SERVER ON PAGE LOAD ---
   let nicenessPreloaded = false;   // true once loaded from DB
@@ -268,41 +248,6 @@
   // Poll every second to catch cars joining/leaving
   setInterval(updateChargingInfo, 1000);
   updateChargingInfo();
-
-
-  function startSpeechRecognition() {
-    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      alert('Spracherkennung wird nicht unterstützt.');
-      return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-
-    recognition.lang = 'de-DE';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    document.getElementById("result").textContent = "Höre zu... 🎤";
-
-    recognition.onresult = function (event) {
-      const transcript = event.results[0][0].transcript;
-      document.getElementById("promptInput").value = transcript;
-      document.getElementById("result").textContent = "Sprache erkannt!";
-    };
-
-    recognition.onerror = function (event) {
-      document.getElementById("result").textContent = `Fehler: ${event.error}`;
-    };
-
-    recognition.onend = function () {
-      if (!document.getElementById("promptInput").value) {
-        document.getElementById("result").textContent = "Keine Sprache erkannt.";
-      }
-    };
-
-    recognition.start();
-  }
 
 
   // === Push Notification Setup ===
