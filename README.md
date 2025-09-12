@@ -1,6 +1,6 @@
 # Ellioth Recharge Terminal
 
-The Ellioth Recharge Terminal is a software prototype to pioneer the future of electrical car infrastructure and their user experience.
+The Ellioth Recharge Terminal is a website software prototype to pioneer the future of electrical car infrastructure and their user experience. It supports the design and functionality of a vertical display. To access the functionality, the user scans a QR code on the terminal display. The User Interface is primarily made for phones.
 
 <img width="442" height="794" alt="image" src="https://github.com/user-attachments/assets/051e8d05-0507-4e5c-8b1c-b5d12f36ea8e" />
 <img width="596" height="795" alt="image" src="https://github.com/user-attachments/assets/bac4d274-a2e1-453f-a238-2cbb75a95cfa" />
@@ -69,7 +69,7 @@ The Ellioth Recharge Terminal is a software prototype to pioneer the future of e
  
      ErrorLog ${APACHE_LOG_DIR}/ellioth_error.log
      CustomLog ${APACHE_LOG_DIR}/ellioth_access.log combined
-> </VirtualHost>
+</VirtualHost>
 ```
 
 - Run these commands:
