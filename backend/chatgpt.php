@@ -7,7 +7,7 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json");
 
 require_once 'config.php';
-require_once 'require-valid-position.php';
+//require_once 'require-valid-position.php';
 
 const FALLBACK_REPLY = "The DeepSeek API appears to have issues, so sadly, I can't reply to you right now :(";
 
