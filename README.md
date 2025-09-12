@@ -2,6 +2,12 @@
 
 The Ellioth Recharge Terminal is a website software prototype to pioneer the future of electrical car infrastructure and their user experience. It supports the design and functionality of a vertical display. To access the functionality, the user scans a QR code on the terminal display. The User Interface is primarily made for phones.
 
+# How to use
+
+The terminal display can be accessed under https://ellioth.othdb.de/. To try out the User Interface, scan the displayed QR Code with your phone and select the guest profile on the login page.
+
+# Images
+
 <img width="442" height="794" alt="image" src="https://github.com/user-attachments/assets/051e8d05-0507-4e5c-8b1c-b5d12f36ea8e" />
 <img width="596" height="795" alt="image" src="https://github.com/user-attachments/assets/bac4d274-a2e1-453f-a238-2cbb75a95cfa" />
 <img width="612" height="797" alt="image" src="https://github.com/user-attachments/assets/6c54b02a-1265-4683-95a0-9c7cb4d13d6a" />
