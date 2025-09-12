@@ -20,7 +20,9 @@ $db->exec("CREATE TABLE IF NOT EXISTS users (
     surname TEXT,
     email TEXT,
     credit REAL DEFAULT 0.0,
-    total_kwh REAL DEFAULT 0.0
+    total_kwh REAL DEFAULT 0.0,
+    timer_end TEXT DEFAULT NULL,
+    timer_active INTEGER DEFAULT 0
 )");
 
 $db->exec("CREATE TABLE IF NOT EXISTS parking_slots (

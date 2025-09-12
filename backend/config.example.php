@@ -13,6 +13,7 @@ define('DEEPSEEK_PASSWORD', 'YOUR_PASSWORD_HERE');
 define("VAPID_PUBLIC_KEY", "YOUR_PUBLIC_VAPID_KEY_HERE");
 define("VAPID_PRIVATE_KEY", "YOUR_PRIVATE_VAPID_KEY_HERE");
 
+// How many amperes one recharge terminal should have available. They will be evenly split among every car connected to it.
 define("TERMINAL_TOTAL_AMPERES", 60);
 
 // Set this to 0 during development, or if you desire for remote access to the terminal to be possible.
