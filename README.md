@@ -17,17 +17,18 @@ The terminal display can be accessed under https://ellioth.othdb.de/. To try out
 
 # How to setup the app for a unix environment
 
--Clone the repo
+- Clone the repo
 
--Get permissions on the linux start file: 
+- Get permissions on the linux start file: 
 
 > chmod +x [YOUR PATH]/start_linux.sh
 > 
 > chmod +x [YOUR PATH]/do_every_second.sh
-> 
--Adapt the paths inside the aforementioned linux scripts to your environment
+>
 
--Install dependencies
+- Adapt the paths **inside** the aforementioned linux scripts to your environment
+
+- Install dependencies
 -  node:
 > sudo apt update
 > 
@@ -93,7 +94,7 @@ The terminal display can be accessed under https://ellioth.othdb.de/. To try out
 > 
 > sudo chmod 775 [YOUR PATH]/backend
 
--Go into the backend directory and install composer:
+- Go into the backend directory and install composer:
 > php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 > 
 > php composer-setup.php
@@ -103,12 +104,12 @@ The terminal display can be accessed under https://ellioth.othdb.de/. To try out
 > sudo mv composer.phar /usr/local/bin/composer
 > 
 
--Go into the backend directory of the project and generate VAPID keys for the push notifications
+- Go into the backend directory of the project and generate VAPID keys for the push notifications
 > php gen-vapid-keys.php
 
--You will get a Private and Public key output. Enter both in your config.php. Additionally, go to src > hooks > usePush.ts and enter your Public key there as well.
+- You will get a Private and Public key output. Enter both in your config.php. Additionally, go to src > hooks > usePush.ts and enter your Public key there as well.
 
--Install these extensions:
+- Install these extensions:
 > sudo apt install php-mbstring php-gmp php-bcmath
 
 Locate your servers php.ini and uncomment these extensions:
@@ -125,4 +126,4 @@ Locate your servers php.ini and uncomment these extensions:
 - if ./start_linux.sh throws "cannot execute: required file not found", do:
 > dos2unix start_linux.sh
 
--The setup has finished here. Go to https://ellioth.othdb.de/. You should be able to access the following routes: /, /test, /login, /charging, /profile
+- The setup has finished here. Go to https://ellioth.othdb.de/. You should be able to access the following routes: /, /test, /login, /charging, /profile
