@@ -51,6 +51,19 @@
     color: #fff;
 }
 
+.guest-text {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #000000;
+    margin: 0.5rem 0 1rem 0;
+}
+
+.guest-link {
+    color: #ff3b92;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
 .welcome-text {
     font-size: 10vw;
     margin-bottom: 2vh;

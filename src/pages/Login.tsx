@@ -23,10 +23,8 @@ export default function Login() {
         credentials: 'same-origin',
       });
 
-      const text = await res.text(); // read raw response
-
-      // Extract last JSON object
-      const jsonStrings = text.match(/\{[^{}]*\}$/); // match last {...}
+      const text = await res.text();
+      const jsonStrings = text.match(/\{[^{}]*\}$/);
       if (!jsonStrings) {
         addNotification('Invalid server response');
         setLoading(false);
@@ -46,7 +44,6 @@ export default function Login() {
       if (!res.ok) {
         addNotification(data.error || 'Login failed');
       } else {
-        // Redirect after a short delay so notification is visible
         setTimeout(() => {
           window.location.href = '/charging';
         }, 200);
@@ -54,6 +51,49 @@ export default function Login() {
     } catch (err) {
       console.error(err);
       addNotification('Login request failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGuestLogin = async () => {
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('guest', '1');
+
+      const res = await fetch('/api/ldap.php', {
+        method: 'POST',
+        body: formData,
+        credentials: 'same-origin',
+      });
+
+      const text = await res.text();
+      const jsonStrings = text.match(/\{[^{}]*\}$/);
+      if (!jsonStrings) {
+        addNotification('Guest login failed: invalid server response');
+        setLoading(false);
+        return;
+      }
+
+      let data;
+      try {
+        data = JSON.parse(jsonStrings[0]);
+      } catch (err) {
+        console.error('Failed to parse JSON:', err, 'from:', jsonStrings[0]);
+        addNotification('Guest login failed');
+        setLoading(false);
+        return;
+      }
+
+      if (!res.ok) {
+        addNotification(data.error || 'Guest login failed');
+      } else {
+        window.location.href = '/charging';
+      }
+    } catch (err) {
+      console.error(err);
+      addNotification('Guest login failed');
     } finally {
       setLoading(false);
     }
@@ -77,6 +117,14 @@ export default function Login() {
           onInput={(e: any) => setPassword(e.target.value)}
           required
         />
+
+        <p class="guest-text">
+          Not an OTH Regensburg student?{' '}
+          <span class="guest-link" onClick={handleGuestLogin}>
+            Log in as a guest
+          </span>
+        </p>
+
         <button type="submit" disabled={loading}>
           {loading ? 'Loading...' : 'Login'}
         </button>

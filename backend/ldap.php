@@ -3,7 +3,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Only accept POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
@@ -12,69 +11,76 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 header('Content-Type: application/json');
 
-// Validate input
-if (!isset($_POST['username']) || !isset($_POST['password'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Missing username or password']);
-    exit;
+// Check if guest login
+$isGuest = isset($_POST['guest']) && $_POST['guest'] === '1';
+
+if (!$isGuest) {
+    // Validate input
+    if (!isset($_POST['username']) || !isset($_POST['password'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Missing username or password']);
+        exit;
+    }
+
+    $ldap_host = 'ldaps://adldap.hs-regensburg.de';
+    $ldap_dn   = 'DC=hs-regensburg,DC=de';
+    $ldap_user = $_POST['username'];
+    $ldap_pass = $_POST['password'];
+    $samAccountName = explode('@', $ldap_user)[0];
+
+    // Connect LDAP
+    $ldap_conn = ldap_connect($ldap_host);
+    if (!$ldap_conn) {
+        http_response_code(500);
+        echo json_encode(['error' => 'LDAP server connection failed']);
+        exit;
+    }
+
+    ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
+    ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
+
+    if (!@ldap_bind($ldap_conn, $ldap_user, $ldap_pass)) {
+        http_response_code(401);
+        echo json_encode(['error' => 'Invalid credentials']);
+        exit;
+    }
+
+    // Search LDAP
+    $filter = "(samAccountName=$samAccountName)";
+    $attributes = ['givenName', 'sn', 'mail'];
+    $search = ldap_search($ldap_conn, $ldap_dn, $filter, $attributes);
+    if (!$search) {
+        http_response_code(500);
+        echo json_encode(['error' => 'LDAP search failed']);
+        exit;
+    }
+
+    $entries = ldap_get_entries($ldap_conn, $search);
+    ldap_unbind($ldap_conn);
+
+    session_start();
+    $_SESSION['username'] = $ldap_user;
+    unset($_SESSION['parking_position']);
+
+    $givenName = $entries[0]['givenname'][0] ?? '';
+    $sn        = $entries[0]['sn'][0] ?? '';
+    $email     = $entries[0]['mail'][0] ?? '';
+    $fullName  = trim("$givenName $sn");
+    if ($fullName === '') $fullName = $samAccountName;
+
+} else {
+    // --- Guest login ---
+    session_start();
+    $ldap_user = 'guest';
+    $givenName = 'Guest';
+    $sn = '';
+    $email = 'guest@localhost';
+    $fullName = 'Guest';
+    $_SESSION['username'] = 'guest';
+    unset($_SESSION['parking_position']);
 }
 
-$ldap_host = 'ldaps://adldap.hs-regensburg.de';
-$ldap_dn   = 'DC=hs-regensburg,DC=de';
-$ldap_user = $_POST['username'];
-$ldap_pass = $_POST['password'];
-$samAccountName = explode('@', $ldap_user)[0];
-
-// Connect LDAP
-$ldap_conn = ldap_connect($ldap_host);
-if (!$ldap_conn) {
-    http_response_code(500);
-    echo json_encode(['error' => 'LDAP server connection failed']);
-    exit;
-}
-
-ldap_set_option($ldap_conn, LDAP_OPT_PROTOCOL_VERSION, 3);
-ldap_set_option($ldap_conn, LDAP_OPT_REFERRALS, 0);
-
-// Bind user
-if (!@ldap_bind($ldap_conn, $ldap_user, $ldap_pass)) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Invalid credentials']);
-    exit;
-}
-
-// Search LDAP
-$filter = "(samAccountName=$samAccountName)";
-$attributes = ['givenName', 'sn', 'mail'];
-$search = ldap_search($ldap_conn, $ldap_dn, $filter, $attributes);
-if (!$search) {
-    http_response_code(500);
-    echo json_encode(['error' => 'LDAP search failed']);
-    exit;
-}
-
-$entries = ldap_get_entries($ldap_conn, $search);
-ldap_unbind($ldap_conn);
-
-session_start();
-
-// Store user info
-$_SESSION['username'] = $ldap_user;
-unset($_SESSION['parking_position']);
-
-if ($entries['count'] < 1) {
-    http_response_code(404);
-    echo json_encode(['error' => 'User not found']);
-    exit;
-}
-
-$givenName = $entries[0]['givenname'][0] ?? '';
-$sn        = $entries[0]['sn'][0] ?? '';
-$email     = $entries[0]['mail'][0] ?? '';
-$fullName  = trim("$givenName $sn");
-if ($fullName === '') $fullName = $samAccountName;
-
-// SQLite DB operations
+// --- SQLite DB operations ---
 $db = new PDO('sqlite:' . __DIR__ . '/tokens.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
@@ -92,7 +98,6 @@ $stmt->execute();
 
 // Force refresh token
 require_once __DIR__ . '/generate-token.php';
-$newToken = generateNewToken(true);
 $newToken = generateNewToken(true);
 
 // Insert or update user
