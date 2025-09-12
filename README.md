@@ -1,3 +1,14 @@
+# Ellioth Recharge Terminal
+
+The Ellioth Recharge Terminal is a software prototype to pioneer the future of electrical car infrastructure and their user experience.
+
+<img width="442" height="794" alt="image" src="https://github.com/user-attachments/assets/051e8d05-0507-4e5c-8b1c-b5d12f36ea8e" />
+<img width="596" height="795" alt="image" src="https://github.com/user-attachments/assets/bac4d274-a2e1-453f-a238-2cbb75a95cfa" />
+<img width="612" height="797" alt="image" src="https://github.com/user-attachments/assets/6c54b02a-1265-4683-95a0-9c7cb4d13d6a" />
+<img width="618" height="796" alt="image" src="https://github.com/user-attachments/assets/50f7da86-0855-46ce-b6a1-edc11a5d29a8" />
+<img width="597" height="796" alt="image" src="https://github.com/user-attachments/assets/5c878c08-ae0b-4b29-850e-7d0e4450da72" />
+<img width="599" height="794" alt="image" src="https://github.com/user-attachments/assets/f39fd634-12ea-4f10-9c75-08116e905f91" />
+
 # How to setup the app for a unix environment
 
 -Clone the repo
@@ -10,16 +21,17 @@
 > 
 -Adapt the paths inside the aforementioned linux scripts to your environment
 
--Install dependencies (vite, typescript, php, preact):
+-Install dependencies
 -  node:
 > sudo apt update
 > 
 > sudo apt install -y nodejs npm php
 
 - dependencies:
-> cd [YOUR PATH]/ellioth
-
+> cd [YOUR PATH]
+>
 > npm install
+
 - Create a config.php file in /backend based on the example config file template and set your preferences there. Also, set your DeepSeek API username and password.
 
 - Set up a ellioth.conf file with sudo nano /etc/apache2/sites-available/ellioth.conf
