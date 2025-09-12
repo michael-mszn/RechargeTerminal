@@ -220,6 +220,18 @@ export default function Charging() {
         if (prev <= 1) {
           clearInterval(interval);
           setTimerActive(false);
+
+          // --- Update backend when charging finishes ---
+          fetch("/api/set-car-status.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "fully_charged" }),
+            credentials: "include"
+          })
+            .then(res => res.json())
+            .then(data => console.log("[set-car-status.php] response:", data))
+            .catch(err => console.error("[set-car-status.php] error:", err));
+
           return 0;
         }
         return prev - 1;
