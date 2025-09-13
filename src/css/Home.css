@@ -126,7 +126,7 @@ body {
     margin-top: 0.5%;
     margin-left: 7.5%;
     margin-right: 7.5%;
-    word-wrap: break-word;   /* ensures long words wrap */
+    word-wrap: break-word;
     white-space: normal;
     font-size: 0.8rem;
     text-align: center;
@@ -141,13 +141,13 @@ body {
 .parking-grid {
     position: relative;
     width: 100%;
-    height: 40px; /* or match your car icon height */
+    height: 40px; /* or match car icon height */
     margin-top: -5%;
 }
 
 .car-icon {
     position: absolute;
-    width: 18px;        /* fix width */
+    width: 18px;
     height: auto;       /* auto height to keep aspect ratio */
     transform: translateY(-50%);
     object-fit: contain; /* preserve image ratio */

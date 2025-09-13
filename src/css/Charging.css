@@ -67,7 +67,7 @@
 
 /* Timer box */
 .timer-box {
-    background-color: #ececec; /* default grey */
+    background-color: #ececec;
     border-radius: 12px;
     padding: 0.5rem 1rem;
     margin: 0.5rem 0;
@@ -75,14 +75,13 @@
     font-weight: bold;
     font-size: clamp(1.5rem, 4vw, 2rem);
     color: #a8e792;
-    min-height: 2.5rem; /* reserve space */
-    min-width: 10rem;   /* match buttons */
+    min-height: 2.5rem;
+    min-width: 10rem;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-/* Active timer: just make background white */
 .timer-box.active-timer {
     background-color: white;
 }
@@ -107,8 +106,8 @@
     font-weight: bold;
     font-size: clamp(1rem, 2.5vw, 1.3rem);
     padding: 0.75rem 3rem;
-    min-width: 10rem;  /* same width for both buttons */
-    min-height: 3rem;  /* same height */
+    min-width: 10rem;
+    min-height: 3rem;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
@@ -150,7 +149,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.7); /* dim background */
+    background: rgba(0,0,0,0.7);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -173,7 +172,6 @@
     position: relative;
 }
 
-/* Close X button – clean pink X */
 .floating-timer-container .close-overlay {
     position: absolute;
     top: 0.5rem;

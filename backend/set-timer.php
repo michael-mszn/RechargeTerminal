@@ -32,7 +32,7 @@ try {
             exit;
         }
 
-        // Compute end time (store in server time, no 2h offset hack)
+        // Compute end time
         $endTime = new DateTime('now', new DateTimeZone('UTC'));
         $endTime->modify("+$hours hours");
         $endTime->modify("+$minutes minutes");

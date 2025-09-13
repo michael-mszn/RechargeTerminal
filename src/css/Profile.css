@@ -14,7 +14,6 @@
     overflow-y: auto; /* enables vertical scrolling */
 }
 
-/* Responsive dynamic name */
 .profile-name {
     font-size: 10vw;
     margin-bottom: 2vh;
@@ -149,10 +148,10 @@
 
 .pillar-bar {
     background-color: #a8e792;
-    width: 50%; /* thicker */
+    width: 50%;
     border-radius: 6px 6px 6px 6px;
     display: flex;
-    align-items: flex-end; /* bottom-aligned numbers */
+    align-items: flex-end;
     justify-content: center;
     position: relative;
     z-index: 2; /* in front of chart lines */
@@ -173,8 +172,8 @@
 
 /* Single pink separator below pillars but above labels */
 .pillar-chart-separator {
-    position: absolute;       /* absolutely positioned inside .pillar-chart */
-    bottom: 6vw;            /* distance above labels */
+    position: absolute;
+    bottom: 6vw;
     left: 0;
     width: 100%;
     height: 4px;              /* thickness of separator */
@@ -214,24 +213,23 @@
     cursor: pointer;
     background: none;
     border: none;
-    outline: none; /* remove blue focus square */
-    -webkit-tap-highlight-color: transparent; /* removes tap highlight on mobile */
-    transition: border-color 0.4s ease; /* smooth color fade */
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.4s ease;
 }
 
 .date-selector-arrow-left {
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
-    border-right: 15px solid #a8e792; /* green */
+    border-right: 15px solid #a8e792;
 }
 
 .date-selector-arrow-right {
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
-    border-left: 15px solid #a8e792; /* green */
+    border-left: 15px solid #a8e792;
 }
 
-/* pressed state turns pink temporarily */
 .date-selector-arrow.pressed-left {
     border-right-color: #ff3b92;
 }

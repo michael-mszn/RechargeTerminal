@@ -148,7 +148,6 @@ body.no-scroll {
     animation: fadeIn 0.3s ease;
 }
 
-/* Green fill using scale transform to preserve rounded ends */
 .notification::before {
     content: '';
     position: absolute;
@@ -195,10 +194,10 @@ body.no-scroll {
 
 .notif-close {
     position: absolute; /* absolutely positioned inside notification */
-    left: 1rem; /* very close to left edge */
+    left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 1.8rem; /* bigger X */
+    font-size: 1.8rem;
     background: none;
     border: none;
     color: #ff3b92;
@@ -218,7 +217,7 @@ body.no-scroll {
     filter: brightness(0) invert(1);
 }
 
-/* Position overlay backdrop that blocks everything (above navbar/notifications) */
+
 .position-overlay-backdrop {
     position: fixed;
     inset: 0;
@@ -230,7 +229,6 @@ body.no-scroll {
     pointer-events: all; /* capture all interactions */
 }
 
-/* The actual overlay card */
 .position-overlay {
     width: 92%;
     max-width: 420px;
@@ -293,7 +291,7 @@ body.no-scroll {
     text-align: center;
 }
 
-/* Prevent body scrolling via .no-scroll class (already used elsewhere) */
+/* Prevent body scrolling via .no-scroll class */
 body.no-scroll {
     overflow: hidden !important;
 }

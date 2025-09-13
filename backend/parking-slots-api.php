@@ -52,7 +52,6 @@ try {
     // Recalculate amperes whenever a car joins/leaves charging
     recalculateAmperes($pdo, $slotId);
 
-    // Push notifications (existing code)
     $userStmt = $pdo->prepare("SELECT username FROM parking_slots WHERE slot_id = :slot_id");
     $userStmt->execute([':slot_id' => $slotId]);
     $username = $userStmt->fetchColumn();
