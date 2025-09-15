@@ -127,3 +127,5 @@ Locate your servers php.ini and uncomment these extensions:
 > dos2unix start_linux.sh
 
 - The setup has finished here. Go to https://ellioth.othdb.de/. You should be able to access the following routes: /, /test, /login, /charging, /profile
+
+- **Note: If the login page shows "Invalid Server Response" - try restarting the server with the start script again.** 
