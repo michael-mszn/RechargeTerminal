@@ -56,6 +56,7 @@ export default function Login() {
     }
   };
 
+  //@ts-ignore
   const handleGuestLogin = async () => {
     setLoading(true);
     try {
@@ -120,8 +121,9 @@ export default function Login() {
 
         <p class="guest-text">
           Not an OTH Regensburg student?{' '}
-          <span class="guest-link" onClick={handleGuestLogin}>
-            Log in as a guest
+          {/*<span class="guest-link" onClick={handleGuestLogin}>*/}
+          <span className="guest-link">
+            Log in as a guest (Disabled)
           </span>
         </p>
 
