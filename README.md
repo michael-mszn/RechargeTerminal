@@ -4,7 +4,7 @@ The Ellioth Recharge Terminal is a website software prototype to pioneer the fut
 
 # How To Use
 
-The terminal display can be accessed under https://ellioth.othdb.de/. To try out the User Interface, scan the displayed QR Code with your phone and select the guest profile on the login page.
+The terminal display can be accessed under your hosted website. To try out the User Interface, scan the displayed QR Code with your phone and select the guest profile on the login page.
 
 # Gallery
 
