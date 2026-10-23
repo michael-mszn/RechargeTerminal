@@ -1,3 +1,13 @@
+# Security Warning: Critical PHP Vulnerabilities
+
+This project includes PHP components that have **not been updated to address the latest critical security vulnerabilities** and will not receive future security updates as part of this project.
+
+Before deploying this project, you **must independently update or patch the affected PHP installation** to a secure, supported version. Failure to do so may expose your system to serious security risks, including remote code execution.
+
+For details, refer to the official [PHP security advisory](https://www.php.net/archive/2026.php) regarding the critical vulnerabilities **CVE-2026-109618 and CVE-2026-109619**.
+
+**Do not deploy this project in a production environment until the necessary security updates have been applied and verified.**
+
 # Ellioth Recharge Terminal
 
 The Ellioth Recharge Terminal is a website software prototype to pioneer the future of electrical car infrastructure and their user experience. It supports the design and functionality of a vertical display. To access the functionality, the user scans a QR code on the terminal display. The User Interface is primarily made for phones.
